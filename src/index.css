@@ -1,0 +1,381 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Definition of the design system. All colors, gradients, fonts, etc should be defined here. */
+
+@layer base {
+    :root {
+        --background: 0 0% 100%;
+        --foreground: 0 0% 3.9%;
+
+        --card: 0 0% 100%;
+        --card-foreground: 0 0% 3.9%;
+
+        --popover: 0 0% 100%;
+        --popover-foreground: 0 0% 3.9%;
+
+        --primary: 0 0% 9%;
+        --primary-foreground: 0 0% 98%;
+
+        --secondary: 0 0% 96.1%;
+        --secondary-foreground: 0 0% 9%;
+
+        --muted: 0 0% 96.1%;
+        --muted-foreground: 0 0% 45.1%;
+
+        --accent: 0 0% 96.1%;
+        --accent-foreground: 0 0% 9%;
+
+        --destructive: 0 84.2% 60.2%;
+        --destructive-foreground: 0 0% 98%;
+
+        --border: 0 0% 89.8%;
+        --input: 0 0% 89.8%;
+        --ring: 0 0% 3.9%;
+
+        --radius: 0.5rem;
+
+        --sidebar-background: 0 0% 98%;
+        --sidebar-foreground: 240 5.3% 26.1%;
+        --sidebar-primary: 142 71% 45%;
+        --sidebar-primary-foreground: 0 0% 98%;
+        --sidebar-accent: 240 4.8% 95.9%;
+        --sidebar-accent-foreground: 240 5.9% 10%;
+        --sidebar-border: 220 13% 91%;
+        --sidebar-ring: 142 71% 45%;
+        --chart-1: 12 76% 61%;
+        --chart-2: 173 58% 39%;
+        --chart-3: 197 37% 24%;
+        --chart-4: 43 74% 66%;
+        --chart-5: 27 87% 67%;
+    }
+
+    .dark {
+        --background: 0 0% 3.9%;
+        --foreground: 0 0% 98%;
+
+        --card: 0 0% 3.9%;
+        --card-foreground: 0 0% 98%;
+
+        --popover: 0 0% 3.9%;
+        --popover-foreground: 0 0% 98%;
+
+        --primary: 0 0% 98%;
+        --primary-foreground: 0 0% 9%;
+
+        --secondary: 0 0% 14.9%;
+        --secondary-foreground: 0 0% 98%;
+
+        --muted: 0 0% 14.9%;
+        --muted-foreground: 0 0% 63.9%;
+
+        --accent: 0 0% 14.9%;
+        --accent-foreground: 0 0% 98%;
+
+        --destructive: 0 62.8% 30.6%;
+        --destructive-foreground: 0 0% 98%;
+
+        --border: 0 0% 14.9%;
+        --input: 0 0% 14.9%;
+        --ring: 0 0% 83.1%;
+        --sidebar-background: 240 5.9% 10%;
+        --sidebar-foreground: 240 4.8% 95.9%;
+        --sidebar-primary: 142 71% 45%;
+        --sidebar-primary-foreground: 0 0% 100%;
+        --sidebar-accent: 240 3.7% 15.9%;
+        --sidebar-accent-foreground: 240 4.8% 95.9%;
+        --sidebar-border: 240 3.7% 15.9%;
+        --sidebar-ring: 142 71% 45%;
+        --chart-1: 220 70% 50%;
+        --chart-2: 160 60% 45%;
+        --chart-3: 30 80% 55%;
+        --chart-4: 280 65% 60%;
+        --chart-5: 340 75% 55%;
+    }
+}
+
+@layer base {
+    * {
+        @apply border-border;
+    }
+
+    body {
+        @apply bg-background text-foreground;
+    }
+
+    html {
+        scroll-behavior: smooth;
+    }
+}
+
+@layer components {
+    .gradient-green {
+        background: linear-gradient(135deg, #22c55e 0%, #16a34a 100%);
+    }
+
+    .gradient-blue-green {
+        background: linear-gradient(135deg, #3b82f6 0%, #22c55e 100%);
+    }
+
+    .glass-effect {
+        background: rgba(255, 255, 255, 0.25);
+        backdrop-filter: blur(10px);
+        border: 1px solid rgba(255, 255, 255, 0.18);
+    }
+
+    .hover-scale {
+        @apply transition-transform duration-200 hover:scale-105;
+    }
+
+    .btn-primary {
+        @apply bg-gradient-to-r from-bank-green-600 to-bank-green-700 hover:from-bank-green-700 hover:to-bank-green-800 text-white font-medium py-2.5 px-6 rounded-lg transition-all duration-300 hover:shadow-xl transform hover:-translate-y-1 hover:scale-105 border-0;
+    }
+
+    .btn-secondary {
+        @apply bg-white hover:bg-bank-green-50 text-bank-green-600 border-2 border-bank-green-600 hover:border-bank-green-700 font-medium py-2.5 px-6 rounded-lg transition-all duration-300 hover:shadow-lg transform hover:-translate-y-0.5;
+    }
+
+    .btn-add {
+        @apply bg-gradient-to-r from-bank-green-500 to-bank-green-600 hover:from-bank-green-600 hover:to-bank-green-700 text-white font-semibold py-3 px-6 rounded-xl transition-all duration-300 hover:shadow-xl transform hover:-translate-y-1 hover:scale-105 border-0 flex items-center gap-2;
+    }
+
+    .btn-edit {
+        @apply bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white font-medium py-2 px-4 rounded-lg transition-all duration-300 hover:shadow-lg transform hover:-translate-y-0.5 border-0;
+    }
+
+    .btn-delete {
+        @apply bg-gradient-to-r from-red-500 to-red-600 hover:from-red-600 hover:to-red-700 text-white font-medium py-2 px-4 rounded-lg transition-all duration-300 hover:shadow-lg transform hover:-translate-y-0.5 border-0;
+    }
+
+    /* Scroll animations */
+    .scroll-animate {
+        opacity: 0;
+        transform: translateY(30px);
+        transition: all 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    .scroll-animate.animate {
+        opacity: 1;
+        transform: translateY(0);
+    }
+
+    .stagger-1 {
+        transition-delay: 0.1s;
+    }
+
+    .stagger-2 {
+        transition-delay: 0.2s;
+    }
+
+    .stagger-3 {
+        transition-delay: 0.3s;
+    }
+
+    .stagger-4 {
+        transition-delay: 0.4s;
+    }
+
+    /* Toast positioning - top right */
+    [data-sonner-toaster] {
+        position: fixed !important;
+        top: 1rem !important;
+        right: 1rem !important;
+        left: auto !important;
+        bottom: auto !important;
+        z-index: 9999 !important;
+    }
+
+    /* Success toast styling */
+    [data-sonner-toast][data-type="success"] {
+        background: linear-gradient(135deg, rgb(240 253 244) 0%, rgb(220 252 231) 100%) !important;
+        border: 2px solid rgb(34 197 94) !important;
+        color: rgb(22 101 52) !important;
+        box-shadow: 0 10px 25px rgba(34, 197, 94, 0.15) !important;
+    }
+
+    [data-sonner-toast][data-type="success"] [data-title] {
+        color: rgb(22 101 52) !important;
+        font-weight: 600 !important;
+    }
+
+    [data-sonner-toast][data-type="success"] [data-description] {
+        color: rgb(21 128 61) !important;
+    }
+
+    /* Error toast styling */
+    [data-sonner-toast][data-type="error"] {
+        background: linear-gradient(135deg, rgb(254 242 242) 0%, rgb(254 226 226) 100%) !important;
+        border: 2px solid rgb(239 68 68) !important;
+        color: rgb(153 27 27) !important;
+        box-shadow: 0 10px 25px rgba(239, 68, 68, 0.15) !important;
+    }
+
+    [data-sonner-toast][data-type="error"] [data-title] {
+        color: rgb(153 27 27) !important;
+        font-weight: 600 !important;
+    }
+
+    [data-sonner-toast][data-type="error"] [data-description] {
+        color: rgb(185 28 28) !important;
+    }
+
+    /* Info toast styling */
+    [data-sonner-toast][data-type="info"] {
+        background: linear-gradient(135deg, rgb(239 246 255) 0%, rgb(219 234 254) 100%) !important;
+        border: 2px solid rgb(59 130 246) !important;
+        color: rgb(30 64 175) !important;
+        box-shadow: 0 10px 25px rgba(59, 130, 246, 0.15) !important;
+    }
+
+    /* Warning toast styling */
+    [data-sonner-toast][data-type="warning"] {
+        background: linear-gradient(135deg, rgb(254 252 232) 0%, rgb(254 240 138) 100%) !important;
+        border: 2px solid rgb(245 158 11) !important;
+        color: rgb(146 64 14) !important;
+        box-shadow: 0 10px 25px rgba(245, 158, 11, 0.15) !important;
+    }
+
+    /* Toast animation improvements */
+    [data-sonner-toast] {
+        border-radius: 12px !important;
+        padding: 16px 20px !important;
+        min-width: 350px !important;
+        backdrop-filter: blur(10px) !important;
+    }
+
+    /* Custom toast colors */
+    .toast-success {
+        background: linear-gradient(135deg, rgb(240 253 244) 0%, rgb(220 252 231) 100%) !important;
+        border: 2px solid rgb(34 197 94) !important;
+        color: rgb(22 101 52) !important;
+        box-shadow: 0 10px 25px rgba(34, 197, 94, 0.15) !important;
+    }
+
+    .toast-error {
+        background: linear-gradient(135deg, rgb(254 242 242) 0%, rgb(254 226 226) 100%) !important;
+        border: 2px solid rgb(239 68 68) !important;
+        color: rgb(153 27 27) !important;
+        box-shadow: 0 10px 25px rgba(239, 68, 68, 0.15) !important;
+    }
+}
+
+.navbar-shrink {
+    transform: translateY(-20px);
+    transition: all 0.3s ease-in-out;
+}
+
+.smooth-bounce {
+    animation: bounce-in 0.6s ease-out;
+}
+
+/* Smooth scroll reveal animations */
+@keyframes scroll-up {
+    from {
+        opacity: 0;
+        transform: translateY(40px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+@keyframes scroll-down {
+    from {
+        opacity: 0;
+        transform: translateY(-40px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+@keyframes scroll-left {
+    from {
+        opacity: 0;
+        transform: translateX(40px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateX(0);
+    }
+}
+
+@keyframes scroll-right {
+    from {
+        opacity: 0;
+        transform: translateX(-40px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateX(0);
+    }
+}
+
+.animate-scroll-up {
+    animation: scroll-up 0.8s ease-out forwards;
+}
+
+.animate-scroll-down {
+    animation: scroll-down 0.8s ease-out forwards;
+}
+
+.animate-scroll-left {
+    animation: scroll-left 0.8s ease-out forwards;
+}
+
+.animate-scroll-right {
+    animation: scroll-right 0.8s ease-out forwards;
+}
+
+/* Loading skeleton improvements */
+.skeleton-pulse {
+    animation: skeleton-pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+@keyframes skeleton-pulse {
+
+    0%,
+    100% {
+        opacity: 1;
+    }
+
+    50% {
+        opacity: 0.4;
+    }
+}
+
+/* Sidebar transitions */
+.sidebar-slide-in {
+    animation: sidebar-slide-in 0.3s ease-out forwards;
+}
+
+.sidebar-slide-out {
+    animation: sidebar-slide-out 0.3s ease-out forwards;
+}
+
+@keyframes sidebar-slide-in {
+    from {
+        transform: translateX(-100%);
+    }
+
+    to {
+        transform: translateX(0);
+    }
+}
+
+@keyframes sidebar-slide-out {
+    from {
+        transform: translateX(0);
+    }
+
+    to {
+        transform: translateX(-100%);
+    }
+}
