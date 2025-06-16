@@ -133,7 +133,37 @@
     }
 
     .btn-secondary {
-        @apply bg-white hover:bg-bank-green-50 text-bank-green-600 border-2 border-bank-green-600 hover:border-bank-green-700 font-medium py-2.5 px-6 rounded-lg transition-all duration-300 hover:shadow-lg transform hover:-translate-y-0.5;
+        background: white !important;
+        color: #16a34a !important;
+        border: 2px solid #16a34a !important;
+        font-weight: 500 !important;
+        padding: 0.625rem 1.5rem !important;
+        border-radius: 0.5rem !important;
+        transition: all 0.3s ease !important;
+        transform: translateY(0) !important;
+    }
+
+    .btn-secondary:hover {
+        background: #f0fdf4 !important;
+        border-color: #15803d !important;
+        color: #15803d !important;
+        box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05) !important;
+        transform: translateY(-2px) !important;
+    }
+
+    /* Override default shadcn/ui button styling */
+    button.btn-secondary,
+    .btn-secondary {
+        background: white !important;
+        color: #16a34a !important;
+        border: 2px solid #16a34a !important;
+    }
+
+    button.btn-secondary:hover,
+    .btn-secondary:hover {
+        background: #f0fdf4 !important;
+        color: #15803d !important;
+        border-color: #15803d !important;
     }
 
     .btn-add {
