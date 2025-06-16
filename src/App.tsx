@@ -3,22 +3,39 @@ import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
-import Index from "./pages/Index";
-import Login from "./pages/Login";
-import Register from "./pages/Register";
-import AdminDashboard from "./pages/admin/Dashboard";
-import AdminNasabah from "./pages/admin/Nasabah";
-import AdminKategori from "./pages/admin/Kategori";
-import PenjemputanSampah from "./pages/admin/PenjemputanSampah";
-import Transaksi from "./pages/admin/Transaksi";
-import NasabahDashboard from "./pages/nasabah/Dashboard";
-import ProfilNasabah from "./pages/nasabah/Profil";
-import RiwayatTransaksi from "./pages/nasabah/RiwayatTransaksi";
-import RequestJemput from "./pages/nasabah/RequestJemput";
-import TukarPoin from "./pages/nasabah/TukarPoin";
+import { Suspense, lazy } from "react";
+import SkeletonLoader from "@/components/SkeletonLoader";
+
+// Lazy load components for better code splitting
+const Index = lazy(() => import("./pages/Index"));
+const Login = lazy(() => import("./pages/Login"));
+const Register = lazy(() => import("./pages/Register"));
+
+// Admin pages - lazy loaded
+const AdminDashboard = lazy(() => import("./pages/admin/Dashboard"));
+const AdminNasabah = lazy(() => import("./pages/admin/Nasabah"));
+const AdminKategori = lazy(() => import("./pages/admin/Kategori"));
+const PenjemputanSampah = lazy(() => import("./pages/admin/PenjemputanSampah"));
+const Transaksi = lazy(() => import("./pages/admin/Transaksi"));
+
+// Nasabah pages - lazy loaded
+const NasabahDashboard = lazy(() => import("./pages/nasabah/Dashboard"));
+const ProfilNasabah = lazy(() => import("./pages/nasabah/Profil"));
+const RiwayatTransaksi = lazy(() => import("./pages/nasabah/RiwayatTransaksi"));
+const RequestJemput = lazy(() => import("./pages/nasabah/RequestJemput"));
+const TukarPoin = lazy(() => import("./pages/nasabah/TukarPoin"));
+
+// Error page - can be loaded immediately as it's small
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
+
+// Loading fallback component
+const LoadingFallback = ({ type = 'dashboard' }: { type?: string }) => (
+  <div className="min-h-screen bg-gray-50">
+    <SkeletonLoader type={type as any} />
+  </div>
+);
 
 const App = () => (
   <QueryClientProvider client={queryClient}>
@@ -26,23 +43,78 @@ const App = () => (
       <Toaster />
       <Sonner />
       <BrowserRouter>
-        <Routes>
-          <Route path="/" element={<Index />} />
-          <Route path="/login" element={<Login />} />
-          <Route path="/register" element={<Register />} />
-          <Route path="/admin/dashboard" element={<AdminDashboard />} />
-          <Route path="/admin/nasabah" element={<AdminNasabah />} />
-          <Route path="/admin/kategori" element={<AdminKategori />} />
-          <Route path="/admin/penjemputan" element={<PenjemputanSampah />} />
-          <Route path="/admin/transaksi" element={<Transaksi />} />
-          <Route path="/nasabah/dashboard" element={<NasabahDashboard />} />
-          <Route path="/nasabah/profil" element={<ProfilNasabah />} />
-          <Route path="/nasabah/riwayat" element={<RiwayatTransaksi />} />
-          <Route path="/nasabah/jemput" element={<RequestJemput />} />
-          <Route path="/nasabah/tukar-poin" element={<TukarPoin />} />
-          {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
-          <Route path="*" element={<NotFound />} />
-        </Routes>
+        <Suspense fallback={<LoadingFallback />}>
+          <Routes>
+            <Route path="/" element={<Index />} />
+            <Route path="/login" element={
+              <Suspense fallback={<LoadingFallback type="form" />}>
+                <Login />
+              </Suspense>
+            } />
+            <Route path="/register" element={
+              <Suspense fallback={<LoadingFallback type="form" />}>
+                <Register />
+              </Suspense>
+            } />
+
+            {/* Admin Routes */}
+            <Route path="/admin/dashboard" element={
+              <Suspense fallback={<LoadingFallback type="dashboard" />}>
+                <AdminDashboard />
+              </Suspense>
+            } />
+            <Route path="/admin/nasabah" element={
+              <Suspense fallback={<LoadingFallback type="table" />}>
+                <AdminNasabah />
+              </Suspense>
+            } />
+            <Route path="/admin/kategori" element={
+              <Suspense fallback={<LoadingFallback type="table" />}>
+                <AdminKategori />
+              </Suspense>
+            } />
+            <Route path="/admin/penjemputan" element={
+              <Suspense fallback={<LoadingFallback type="table" />}>
+                <PenjemputanSampah />
+              </Suspense>
+            } />
+            <Route path="/admin/transaksi" element={
+              <Suspense fallback={<LoadingFallback type="table" />}>
+                <Transaksi />
+              </Suspense>
+            } />
+
+            {/* Nasabah Routes */}
+            <Route path="/nasabah/dashboard" element={
+              <Suspense fallback={<LoadingFallback type="dashboard" />}>
+                <NasabahDashboard />
+              </Suspense>
+            } />
+            <Route path="/nasabah/profil" element={
+              <Suspense fallback={<LoadingFallback type="profile" />}>
+                <ProfilNasabah />
+              </Suspense>
+            } />
+            <Route path="/nasabah/riwayat" element={
+              <Suspense fallback={<LoadingFallback type="riwayat" />}>
+                <RiwayatTransaksi />
+              </Suspense>
+            } />
+            <Route path="/nasabah/jemput" element={
+              <Suspense fallback={<LoadingFallback type="request-jemput" />}>
+                <RequestJemput />
+              </Suspense>
+            } />
+            <Route path="/nasabah/tukar-poin" element={
+              <Suspense fallback={<LoadingFallback type="tukar-poin" />}>
+                <TukarPoin />
+              </Suspense>
+            } />
+
+            {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
+            <Route path="*" element={<NotFound />} />
+          </Routes>
+        </Suspense>
       </BrowserRouter>
     </TooltipProvider>
   </QueryClientProvider>
