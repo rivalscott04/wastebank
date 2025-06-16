@@ -4,7 +4,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle }from '@/comp
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
-import { toast } from 'sonner';
+import { toast } from '@/hooks/use-toast';
 import NasabahSidebar from '@/components/NasabahSidebar';
 import SkeletonLoader from '@/components/SkeletonLoader';
 import {

@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { toast } from 'sonner';
+import { toast } from '@/hooks/use-toast';
 import AdminSidebar from '@/components/AdminSidebar';
 import SkeletonLoader from '@/components/SkeletonLoader';
 import {
