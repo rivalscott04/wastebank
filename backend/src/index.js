@@ -32,6 +32,9 @@ app.use('/api/transactions', require('./routes/transactions'));
 app.use('/api/rewards', require('./routes/rewards'));
 app.use('/api/reward-redemptions', require('./routes/rewardRedemptions'));
 
+// Tambahkan route dashboard/activities
+app.use('/api', require('./routes/index'));
+
 // Basic test route
 app.get('/', (req, res) => {
   res.json({ message: 'Welcome to WasteBank API' });

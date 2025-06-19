@@ -16,108 +16,98 @@ import {
   BarChart3,
   Activity
 } from 'lucide-react';
+import { userService } from '@/services/user.service';
+import { transactionService } from '@/services/transaction.service';
 
 const AdminDashboard = () => {
   const navigate = useNavigate();
   const [user, setUser] = useState<any>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [stats, setStats] = useState({
+    totalUsers: 0,
+    totalWeight: 0,
+    totalTransactions: 0,
+    totalPoints: 0
+  });
+  const [error, setError] = useState('');
+  const [activities, setActivities] = useState<any[]>([]);
 
   useEffect(() => {
-    // Simulate loading time
     const loadData = async () => {
       setIsLoading(true);
-      await new Promise(resolve => setTimeout(resolve, 1500)); // Simulate API call
-
-      // Check if user is logged in and is admin
-      const userData = localStorage.getItem('user');
-      if (!userData) {
-        navigate('/login');
-        return;
-      }
-
-      const parsedUser = JSON.parse(userData);
-      if (parsedUser.role !== 'admin') {
-        toast.error("Akses Ditolak", {
-          description: "Anda tidak memiliki akses ke halaman admin",
+      setError('');
+      try {
+        // Check if user is logged in and is admin
+        const userData = localStorage.getItem('user');
+        if (!userData) {
+          navigate('/login');
+          return;
+        }
+        const parsedUser = JSON.parse(userData);
+        if (parsedUser.role !== 'admin') {
+          toast.error('Akses Ditolak', { description: 'Anda tidak memiliki akses ke halaman admin' });
+          navigate('/');
+          return;
+        }
+        setUser(parsedUser);
+        // Fetch data
+        const [users, transactions] = await Promise.all([
+          userService.getAllUsers(),
+          transactionService.getAllTransactions()
+        ]);
+        setStats({
+          totalUsers: users.length,
+          totalWeight: transactions.reduce((sum, t) => sum + Number(t.total_weight || 0), 0),
+          totalTransactions: transactions.length,
+          totalPoints: transactions.reduce((sum, t) => sum + Number(t.total_points || 0), 0)
         });
-        navigate('/');
-        return;
+        // Fetch aktivitas terbaru
+        const res = await fetch('/api/dashboard/activities', {
+          headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
+        });
+        if (res.ok) {
+          const data = await res.json();
+          setActivities(data);
+        } else {
+          setActivities([]);
+        }
+      } catch (e) {
+        console.error('Dashboard error:', e);
+        setError('Gagal memuat data dashboard');
       }
-
-      setUser(parsedUser);
       setIsLoading(false);
     };
-
     loadData();
   }, [navigate]);
 
-  const stats = [
+  const statsArr = [
     {
-      title: "Total Nasabah",
-      value: "2,847",
-      change: "+12%",
-      changeType: "increase",
+      title: 'Total Nasabah',
+      value: stats.totalUsers.toLocaleString('id-ID'),
       icon: Users,
-      color: "text-blue-600",
-      bgColor: "bg-blue-100"
+      color: 'text-blue-600',
+      bgColor: 'bg-blue-100'
     },
     {
-      title: "Sampah Terkumpul",
-      value: "1,245 Kg",
-      change: "+8%",
-      changeType: "increase",
+      title: 'Sampah Terkumpul',
+      value: stats.totalWeight.toLocaleString('id-ID') + ' Kg',
       icon: Recycle,
-      color: "text-green-600",
-      bgColor: "bg-green-100"
+      color: 'text-green-600',
+      bgColor: 'bg-green-100'
     },
     {
-      title: "Total Transaksi",
-      value: "5,692",
-      change: "+23%",
-      changeType: "increase",
+      title: 'Total Transaksi',
+      value: stats.totalTransactions.toLocaleString('id-ID'),
       icon: ShoppingCart,
-      color: "text-purple-600",
-      bgColor: "bg-purple-100"
+      color: 'text-purple-600',
+      bgColor: 'bg-purple-100'
     },
     {
-      title: "Poin Dibagikan",
-      value: "78,540",
-      change: "+15%",
-      changeType: "increase",
+      title: 'Poin Dibagikan',
+      value: stats.totalPoints.toLocaleString('id-ID'),
       icon: TrendingUp,
-      color: "text-orange-600",
-      bgColor: "bg-orange-100"
-    }
-  ];
-
-  const recentActivities = [
-    {
-      id: 1,
-      action: "Nasabah baru mendaftar",
-      user: "Ahmad Wijaya",
-      time: "2 menit yang lalu",
-      type: "user"
-    },
-    {
-      id: 2,
-      action: "Transaksi sampah plastik",
-      user: "Siti Nurhaliza",
-      time: "15 menit yang lalu",
-      type: "transaction"
-    },
-    {
-      id: 3,
-      action: "Request jemput sampah",
-      user: "Budi Santoso",
-      time: "30 menit yang lalu",
-      type: "pickup"
-    },
-    {
-      id: 4,
-      action: "Kategori sampah baru ditambahkan",
-      user: "Admin",
-      time: "1 jam yang lalu",
-      type: "category"
+      color: 'text-orange-600',
+      bgColor: 'bg-orange-100'
     }
   ];
 
@@ -194,27 +184,15 @@ const AdminDashboard = () => {
           </div>
 
           {/* Stats Grid */}
+          {error && <div className="text-red-500 font-semibold mb-4">{error}</div>}
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-            {stats.map((stat, index) => (
+            {statsArr.map((stat, index) => (
               <Card key={index} className="hover:shadow-lg transition-shadow duration-300 hover-scale">
                 <CardContent className="p-6">
                   <div className="flex items-center justify-between">
                     <div>
                       <p className="text-sm font-medium text-gray-600 mb-1">{stat.title}</p>
                       <p className="text-2xl font-bold text-gray-800">{stat.value}</p>
-                      <div className="flex items-center mt-2">
-                        <Badge
-                          variant="secondary"
-                          className={`text-xs ${
-                            stat.changeType === 'increase'
-                              ? 'bg-green-100 text-green-800'
-                              : 'bg-red-100 text-red-800'
-                          }`}
-                        >
-                          {stat.change}
-                        </Badge>
-                        <span className="text-xs text-gray-500 ml-2">dari bulan lalu</span>
-                      </div>
                     </div>
                     <div className={`w-12 h-12 ${stat.bgColor} rounded-xl flex items-center justify-center`}>
                       <stat.icon className={`w-6 h-6 ${stat.color}`} />
@@ -278,26 +256,30 @@ const AdminDashboard = () => {
                 </CardHeader>
                 <CardContent>
                   <div className="space-y-4">
-                    {recentActivities.map((activity) => (
-                      <div key={activity.id} className="flex items-start space-x-3 p-3 hover:bg-gray-50 rounded-lg transition-colors">
-                        <div className={`w-8 h-8 rounded-full flex items-center justify-center ${
-                          activity.type === 'user' ? 'bg-blue-100' :
-                          activity.type === 'transaction' ? 'bg-green-100' :
-                          activity.type === 'pickup' ? 'bg-orange-100' :
-                          'bg-purple-100'
-                        }`}>
-                          {activity.type === 'user' && <Users className="w-4 h-4 text-blue-600" />}
-                          {activity.type === 'transaction' && <ShoppingCart className="w-4 h-4 text-green-600" />}
-                          {activity.type === 'pickup' && <Truck className="w-4 h-4 text-orange-600" />}
-                          {activity.type === 'category' && <Package className="w-4 h-4 text-purple-600" />}
+                    {activities.length === 0 ? (
+                      <div className="text-gray-400 italic">Belum ada aktivitas terbaru</div>
+                    ) : (
+                      activities.map((activity, idx) => (
+                        <div key={idx} className="flex items-start space-x-3 p-3 hover:bg-gray-50 rounded-lg transition-colors">
+                          <div className={`w-8 h-8 rounded-full flex items-center justify-center ${
+                            activity.type === 'user' ? 'bg-blue-100' :
+                            activity.type === 'transaction' ? 'bg-green-100' :
+                            activity.type === 'pickup' ? 'bg-orange-100' :
+                            'bg-purple-100'
+                          }`}>
+                            {activity.type === 'user' && <Users className="w-4 h-4 text-blue-600" />}
+                            {activity.type === 'transaction' && <ShoppingCart className="w-4 h-4 text-green-600" />}
+                            {activity.type === 'pickup' && <Truck className="w-4 h-4 text-orange-600" />}
+                            {activity.type === 'reward' && <Package className="w-4 h-4 text-purple-600" />}
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <p className="text-sm font-medium text-gray-800">{activity.action}</p>
+                            <p className="text-sm text-gray-500">{activity.user}</p>
+                            <p className="text-xs text-gray-400">{new Date(activity.time).toLocaleString('id-ID')}</p>
+                          </div>
                         </div>
-                        <div className="flex-1 min-w-0">
-                          <p className="text-sm font-medium text-gray-800">{activity.action}</p>
-                          <p className="text-sm text-gray-500">{activity.user}</p>
-                          <p className="text-xs text-gray-400">{activity.time}</p>
-                        </div>
-                      </div>
-                    ))}
+                      ))
+                    )}
                   </div>
                 </CardContent>
               </Card>
