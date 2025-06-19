@@ -25,7 +25,7 @@ import { toast } from '@/hooks/use-toast';
 import AdminSidebar from '@/components/AdminSidebar';
 import SkeletonLoader from '@/components/SkeletonLoader';
 import ConfirmDialog from '@/components/ConfirmDialog';
-import { Users, Plus, Edit, Trash2, Mail, Phone, MapPin, Star, TrendingUp, UserCheck } from 'lucide-react';
+import { Users, Plus, Edit, Trash2, Mail, Phone, MapPin, Star, TrendingUp, UserCheck, Calendar } from 'lucide-react';
 
 interface Nasabah {
   id: number;
@@ -349,7 +349,15 @@ const AdminNasabah = () => {
                           {nasabah.total_points} poin
                         </span>
                       </TableCell>
-                      <TableCell className="text-gray-600">{new Date(nasabah.created_at).toLocaleDateString('id-ID')}</TableCell>
+                      <TableCell className="text-gray-600">
+                        <div className="flex items-center gap-2">
+                          <Calendar className="w-4 h-4 text-gray-400" />
+                          {nasabah.created_at && !isNaN(new Date(nasabah.created_at).getTime())
+                            ? new Date(nasabah.created_at).toLocaleDateString('id-ID')
+                            : <span className="text-gray-400 italic">-</span>
+                          }
+                        </div>
+                      </TableCell>
                       <TableCell>
                         <div className="flex space-x-2">
                           <button

@@ -46,4 +46,10 @@ Transaction.init({
   modelName: 'Transaction'
 });
 
+Transaction.associate = (models) => {
+  Transaction.belongsTo(models.User, { foreignKey: 'user_id', as: 'user' });
+  Transaction.belongsTo(models.WasteCollection, { foreignKey: 'waste_collection_id', as: 'waste_collection' });
+  Transaction.hasMany(models.TransactionItem, { foreignKey: 'transaction_id', as: 'items' });
+};
+
 module.exports = Transaction; 

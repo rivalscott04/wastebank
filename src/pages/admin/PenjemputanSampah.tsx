@@ -408,7 +408,10 @@ const PenjemputanSampah = () => {
                       <TableCell className="text-gray-600">
                         <div className="flex items-center gap-2">
                           <Calendar className="w-4 h-4 text-gray-400" />
-                          {new Date(request.date_request).toLocaleDateString('id-ID')}
+                          {request.date_request && !isNaN(new Date(request.date_request).getTime())
+                            ? new Date(request.date_request).toLocaleDateString('id-ID')
+                            : <span className="text-gray-400 italic">-</span>
+                          }
                         </div>
                       </TableCell>
                       <TableCell className="text-gray-600">

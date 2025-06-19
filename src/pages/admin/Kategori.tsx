@@ -25,6 +25,7 @@ import AdminSidebar from '@/components/AdminSidebar';
 import SkeletonLoader from '@/components/SkeletonLoader';
 import ConfirmDialog from '@/components/ConfirmDialog';
 import { Package, Plus, Edit, Trash2, Tag, TrendingUp, Calendar } from 'lucide-react';
+import { wasteService } from '@/services/waste.service';
 
 interface Category {
   id: number;
@@ -42,36 +43,30 @@ const AdminKategori = () => {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [dialogMode, setDialogMode] = useState<'add' | 'edit'>('add');
 
-  // Mock data untuk demo
-  const mockCategories: Category[] = [
-    { id: 1, name: 'Plastik', created_at: '2024-01-01' },
-    { id: 2, name: 'Kertas', created_at: '2024-01-02' },
-    { id: 3, name: 'Logam', created_at: '2024-01-03' },
-    { id: 4, name: 'Kaca', created_at: '2024-01-04' }
-  ];
-
   useEffect(() => {
-    // Check if user is logged in and is admin
     const userData = localStorage.getItem('user');
     if (!userData) {
       navigate('/login');
       return;
     }
-
     const parsedUser = JSON.parse(userData);
     if (parsedUser.role !== 'admin') {
-      toast.error("Akses Ditolak", {
-        description: "Anda tidak memiliki akses ke halaman admin",
-      });
+      toast.error('Akses Ditolak', { description: 'Anda tidak memiliki akses ke halaman admin' });
       navigate('/');
       return;
     }
-
-    // Simulate loading
-    setTimeout(() => {
-      setCategories(mockCategories);
+    // Fetch kategori dari API
+    const fetchCategories = async () => {
+      setIsLoading(true);
+      try {
+        const data = await wasteService.getCategories();
+        setCategories(data);
+      } catch (e) {
+        toast.error('Gagal memuat kategori');
+      }
       setIsLoading(false);
-    }, 1000);
+    };
+    fetchCategories();
   }, [navigate]);
 
   const openAddDialog = () => {
@@ -87,49 +82,46 @@ const AdminKategori = () => {
     setIsDialogOpen(true);
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-
-    if (dialogMode === 'add') {
-      const newCategory: Category = {
-        id: Math.max(...categories.map(c => c.id)) + 1,
-        name: formData.name,
-        created_at: new Date().toISOString().split('T')[0]
-      };
-
-      setCategories(prev => [...prev, newCategory]);
-      toast.success("Kategori baru berhasil ditambahkan!", {
-        description: `Kategori "${formData.name}" telah ditambahkan`,
-      });
-    } else if (selectedCategory) {
-      const updatedCategory = {
-        ...selectedCategory,
-        name: formData.name
-      };
-
-      setCategories(prev =>
-        prev.map(c => c.id === selectedCategory.id ? updatedCategory : c)
-      );
-      toast.success("Kategori berhasil diperbarui!", {
-        description: `Kategori "${formData.name}" telah diperbaharui`,
-      });
+    setIsLoading(true);
+    try {
+      if (dialogMode === 'add') {
+        await wasteService.createCategory({ name: formData.name });
+        toast.success('Kategori baru berhasil ditambahkan!');
+      } else if (selectedCategory) {
+        await wasteService.updateCategory(selectedCategory.id, { name: formData.name });
+        toast.success('Kategori berhasil diperbarui!');
+      }
+      // Refresh data
+      const data = await wasteService.getCategories();
+      setCategories(data);
+      setIsDialogOpen(false);
+      setSelectedCategory(null);
+    } catch (e) {
+      toast.error('Gagal menyimpan kategori');
     }
-
-    setIsDialogOpen(false);
-    setSelectedCategory(null);
+    setIsLoading(false);
   };
 
   const handleDelete = (category: Category) => {
     setDeleteCategory(category);
   };
 
-  const confirmDelete = () => {
+  const confirmDelete = async () => {
     if (deleteCategory) {
-      setCategories(prev => prev.filter(c => c.id !== deleteCategory.id));
-      toast.success("Kategori berhasil dihapus!", {
-        description: `Kategori "${deleteCategory.name}" telah dihapus dari sistem`,
-      });
+      setIsLoading(true);
+      try {
+        await wasteService.deleteCategory(deleteCategory.id);
+        toast.success('Kategori berhasil dihapus!');
+        // Refresh data
+        const data = await wasteService.getCategories();
+        setCategories(data);
+      } catch (e) {
+        toast.error('Gagal menghapus kategori');
+      }
       setDeleteCategory(null);
+      setIsLoading(false);
     }
   };
 
@@ -266,7 +258,10 @@ const AdminKategori = () => {
                       <TableCell className="text-gray-600">
                         <div className="flex items-center gap-2">
                           <Calendar className="w-4 h-4 text-gray-400" />
-                          {new Date(category.created_at).toLocaleDateString('id-ID')}
+                          {category.created_at && !isNaN(new Date(category.created_at).getTime())
+                            ? new Date(category.created_at).toLocaleDateString('id-ID')
+                            : <span className="text-gray-400 italic">-</span>
+                          }
                         </div>
                       </TableCell>
                       <TableCell>

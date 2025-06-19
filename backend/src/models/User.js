@@ -43,6 +43,14 @@ User.init({
   points: {
     type: DataTypes.INTEGER,
     defaultValue: 0
+  },
+  date_of_birth: {
+    type: DataTypes.DATEONLY,
+    allowNull: true
+  },
+  gender: {
+    type: DataTypes.ENUM('male', 'female'),
+    allowNull: true
   }
 }, {
   sequelize,

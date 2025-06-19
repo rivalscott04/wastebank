@@ -24,6 +24,7 @@ import {
   Star,
   Award
 } from 'lucide-react';
+import api from '@/services/api';
 
 interface UserProfile {
   id: string;
@@ -76,54 +77,50 @@ const ProfilNasabah = () => {
   useEffect(() => {
     const loadProfile = async () => {
       setIsLoading(true);
-      await new Promise(resolve => setTimeout(resolve, 1000));
-
       // Check if user is logged in and is nasabah
       const userData = localStorage.getItem('user');
       if (!userData) {
         navigate('/login');
         return;
       }
-
       const parsedUser = JSON.parse(userData);
       if (parsedUser.role !== 'nasabah') {
-        toast.error("Akses Ditolak", {
-          description: "Anda tidak memiliki akses ke halaman nasabah",
-        });
+        toast.error("Akses Ditolak", { description: "Anda tidak memiliki akses ke halaman nasabah" });
         navigate('/');
         return;
       }
-
-      // Mock profile data - in real app, fetch from API
-      const mockProfile: UserProfile = {
-        id: parsedUser.id || '1',
-        name: parsedUser.name || 'Ahmad Wijaya',
-        email: parsedUser.email || 'ahmad.wijaya@email.com',
-        phone: '081234567890',
-        address: 'Jl. Merdeka No. 123, Jakarta Pusat, DKI Jakarta 10110',
-        date_of_birth: '1990-05-15',
-        gender: 'male',
-        profile_picture: '',
-        created_at: '2024-01-15T00:00:00Z',
-        total_points: 1250,
-        rank: 'Silver',
-        total_transactions: 18,
-        total_waste_collected: 45.2
-      };
-
-      setProfile(mockProfile);
-      setEditForm({
-        name: mockProfile.name,
-        phone: mockProfile.phone,
-        address: mockProfile.address,
-        date_of_birth: mockProfile.date_of_birth,
-        gender: mockProfile.gender
-      });
-
-      setUser(parsedUser);
-      setIsLoading(false);
+      try {
+        const res = await api.get('/auth/me');
+        const data = res.data;
+        setProfile({
+          id: data.id,
+          name: data.name,
+          email: data.email,
+          phone: data.phone || '',
+          address: data.address || '',
+          date_of_birth: data.date_of_birth || '',
+          gender: data.gender || 'male',
+          profile_picture: data.profile_picture || '',
+          created_at: data.createdAt || '',
+          total_points: data.points || 0,
+          rank: data.rank || 'Bronze',
+          total_transactions: data.total_transactions || 0,
+          total_waste_collected: data.total_waste_collected || 0
+        });
+        setEditForm({
+          name: data.name,
+          phone: data.phone || '',
+          address: data.address || '',
+          date_of_birth: data.date_of_birth || '',
+          gender: data.gender || 'male'
+        });
+        setUser(parsedUser);
+      } catch (error) {
+        toast.error('Gagal memuat profil', { description: 'Terjadi kesalahan saat mengambil data profil' });
+      } finally {
+        setIsLoading(false);
+      }
     };
-
     loadProfile();
   }, [navigate]);
 
@@ -149,28 +146,18 @@ const ProfilNasabah = () => {
   const confirmSave = async () => {
     setIsSaving(true);
     setShowConfirmDialog(false);
-
     try {
-      // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 1500));
-
-      // Update profile
-      const updatedProfile = {
-        ...profile,
-        ...editForm
-      };
-
-      setProfile(updatedProfile);
+      const res = await api.put(`/users/${profile.id}`, {
+        name: editForm.name,
+        phone: editForm.phone,
+        address: editForm.address
+      });
+      const updated = res.data.user;
+      setProfile(prev => ({ ...prev, ...updated }));
       setIsEditing(false);
-
-      toast.success("Profil berhasil diperbarui!", {
-        description: "Informasi profil Anda telah disimpan",
-      });
-
+      toast.success("Profil berhasil diperbarui!", { description: "Informasi profil Anda telah disimpan" });
     } catch (error) {
-      toast.error("Gagal memperbarui profil", {
-        description: "Terjadi kesalahan saat menyimpan data",
-      });
+      toast.error("Gagal memperbarui profil", { description: "Terjadi kesalahan saat menyimpan data" });
     } finally {
       setIsSaving(false);
     }
@@ -342,7 +329,7 @@ const ProfilNasabah = () => {
                         </Label>
                         <div className="p-3 bg-gray-50 rounded-lg border flex items-center justify-between">
                           <span>{profile.email}</span>
-                          <Shield className="w-4 h-4 text-green-600" title="Email terverifikasi" />
+                          <Shield className="w-4 h-4 text-green-600" />
                         </div>
                       </div>
 
@@ -436,7 +423,10 @@ const ProfilNasabah = () => {
                           Bergabung Sejak
                         </Label>
                         <div className="p-3 bg-gray-50 rounded-lg border">
-                          {formatDate(profile.created_at)}
+                          {profile.created_at && !isNaN(new Date(profile.created_at).getTime())
+                            ? new Date(profile.created_at).toLocaleDateString('id-ID')
+                            : <span className="text-gray-400 italic">-</span>
+                          }
                         </div>
                       </div>
                     </div>

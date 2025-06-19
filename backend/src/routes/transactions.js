@@ -1,10 +1,6 @@
 const express = require('express');
 const router = express.Router();
-const Transaction = require('../models/Transaction');
-const TransactionItem = require('../models/TransactionItem');
-const { WasteCollection } = require('../models/WasteCollection');
-const { User } = require('../models/User');
-const { WasteCategory } = require('../models/WasteCategory');
+const { Transaction, TransactionItem, WasteCollection, User, WasteCategory } = require('../models');
 const auth = require('../middleware/auth');
 
 // Get all transactions (admin) or user's transactions (nasabah)
@@ -27,7 +23,7 @@ router.get('/', auth, async (req, res) => {
       },
       {
         model: WasteCollection,
-        as: 'waste_collection'
+        as: 'collection'
       }
     ];
 
@@ -89,7 +85,7 @@ router.post('/', auth, async (req, res) => {
 
         return {
           transaction_id: transaction.id,
-          waste_category_id: item.category_id,
+          category_id: item.category_id,
           weight: item.weight,
           price_per_kg: item.price_per_kg,
           points_earned: item.points_earned,

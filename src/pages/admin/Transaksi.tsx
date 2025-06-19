@@ -24,6 +24,7 @@ import {
   Star,
   TrendingUp
 } from 'lucide-react';
+import { transactionService } from '@/services/transaction.service';
 
 interface Transaction {
   id: string;
@@ -56,83 +57,44 @@ const Transaksi = () => {
     date: ''
   });
 
-  // Mock data
-  const mockTransactions: Transaction[] = [
-    {
-      id: '1',
-      user_id: '1',
-      user_name: 'Siti Nurhaliza',
-      waste_id: '1',
-      waste_name: 'Plastik Botol',
-      weight: 5.5,
-      total_price: 27500,
-      total_points: 55,
-      date: '2024-01-15',
-      created_at: '2024-01-15T10:00:00Z'
-    },
-    {
-      id: '2',
-      user_id: '2',
-      user_name: 'Budi Santoso',
-      waste_id: '2',
-      waste_name: 'Kertas Bekas',
-      weight: 8.2,
-      total_price: 24600,
-      total_points: 82,
-      date: '2024-01-16',
-      created_at: '2024-01-16T14:30:00Z'
-    },
-    {
-      id: '3',
-      user_id: '3',
-      user_name: 'Ahmad Wijaya',
-      waste_id: '3',
-      waste_name: 'Logam Bekas',
-      weight: 12.0,
-      total_price: 120000,
-      total_points: 240,
-      date: '2024-01-17',
-      created_at: '2024-01-17T09:15:00Z'
-    },
-    {
-      id: '4',
-      user_id: '1',
-      user_name: 'Siti Nurhaliza',
-      waste_id: '4',
-      waste_name: 'Kardus Bekas',
-      weight: 3.8,
-      total_price: 11400,
-      total_points: 38,
-      date: '2024-01-18',
-      created_at: '2024-01-18T16:45:00Z'
-    }
-  ];
-
   useEffect(() => {
     const loadData = async () => {
       setIsLoading(true);
-      await new Promise(resolve => setTimeout(resolve, 1500));
-
       const userData = localStorage.getItem('user');
       if (!userData) {
         navigate('/login');
         return;
       }
-
       const parsedUser = JSON.parse(userData);
       if (parsedUser.role !== 'admin') {
-        toast.error("Akses Ditolak", {
-          description: "Anda tidak memiliki akses ke halaman admin",
-        });
+        toast.error('Akses Ditolak', { description: 'Anda tidak memiliki akses ke halaman admin' });
         navigate('/');
         return;
       }
-
       setUser(parsedUser);
-      setTransactions(mockTransactions);
+      try {
+        const apiData = await transactionService.getAllTransactions();
+        // Mapping data dari API ke struktur tabel
+        const mapped = apiData.map((trx: any) => ({
+          id: trx.id,
+          user_id: trx.user_id,
+          user_name: trx.user?.name || '-',
+          waste_id: trx.items?.[0]?.category_id || '-',
+          waste_name: trx.items && trx.items.length > 0
+            ? trx.items.map((i: any) => i.category?.name).filter(Boolean).join(', ')
+            : '-',
+          weight: trx.items?.reduce((sum: number, i: any) => sum + Number(i.weight || 0), 0),
+          total_price: trx.total_amount,
+          total_points: trx.total_points,
+          date: trx.createdAt,
+          created_at: trx.createdAt
+        }));
+        setTransactions(mapped);
+      } catch (e) {
+        toast.error('Gagal memuat data transaksi');
+      }
       setIsLoading(false);
     };
-
     loadData();
   }, [navigate]);
 
@@ -410,7 +372,10 @@ const Transaksi = () => {
                       <TableCell className="text-gray-600">
                         <div className="flex items-center gap-2">
                           <Calendar className="w-4 h-4 text-gray-400" />
-                          {new Date(transaction.date).toLocaleDateString('id-ID')}
+                          {transaction.date && !isNaN(new Date(transaction.date).getTime())
+                            ? new Date(transaction.date).toLocaleDateString('id-ID')
+                            : <span className="text-gray-400 italic">-</span>
+                          }
                         </div>
                       </TableCell>
                       <TableCell>

@@ -24,6 +24,7 @@ import {
 } from 'lucide-react';
 import { toast } from '@/hooks/use-toast';
 import { wasteService } from '@/services/waste.service';
+import api from '@/services/api';
 
 interface WasteItem {
   id: string;
@@ -88,31 +89,33 @@ const RequestJemput = () => {
     approved: 'Dikonfirmasi',
   };
 
+  const [useProfileAddress, setUseProfileAddress] = useState(true);
+  const [profileAddress, setProfileAddress] = useState('');
+
   useEffect(() => {
     const loadData = async () => {
       setIsLoading(true);
-      await new Promise(resolve => setTimeout(resolve, 1000));
-
-      // Check if user is logged in and is nasabah
       const user = localStorage.getItem('user');
       if (!user) {
         navigate('/login');
         return;
       }
-
       const userData = JSON.parse(user);
       if (userData.role !== 'nasabah') {
         navigate('/login');
         return;
       }
-
-      // Pre-fill user data
-      setFormData(prev => ({
-        ...prev,
-        phone: userData.phone || '',
-        address: userData.address || ''
-      }));
-
+      try {
+        const res = await api.get('/auth/me');
+        setProfileAddress(res.data.address || '');
+        setFormData(prev => ({
+          ...prev,
+          phone: res.data.phone || '',
+          address: res.data.address || ''
+        }));
+      } catch (e) {
+        toast.error('Gagal memuat profil');
+      }
       // Fetch categories from backend
       try {
         const cats = await wasteService.getCategories();
@@ -120,10 +123,8 @@ const RequestJemput = () => {
       } catch (e) {
         toast.error('Gagal memuat kategori sampah');
       }
-
       setIsLoading(false);
     };
-
     loadData();
   }, [navigate]);
 
@@ -213,7 +214,7 @@ const RequestJemput = () => {
 
     try {
       await wasteService.createPickupRequest({
-        pickup_address: formData.address,
+        pickup_address: useProfileAddress ? profileAddress : formData.address,
         pickup_date: formData.date,
         pickup_time_slot: formData.time_slot,
         notes: formData.notes,
@@ -406,19 +407,49 @@ const RequestJemput = () => {
                     </div>
 
                     <div>
-                      <Label htmlFor="address" className="flex items-center gap-2 mb-2">
+                      <Label className="flex items-center gap-2 mb-2">
                         <MapPin className="w-4 h-4 text-gray-500" />
                         Alamat Penjemputan *
                       </Label>
-                      <Textarea
-                        id="address"
-                        value={formData.address}
-                        onChange={(e) => setFormData(prev => ({ ...prev, address: e.target.value }))}
-                        placeholder="Masukkan alamat lengkap untuk penjemputan"
-                        className="transition-all duration-200 focus:ring-2 focus:ring-bank-green-500"
-                        rows={3}
-                        required
-                      />
+                      <div className="flex items-center gap-4 mb-2">
+                        <label className="flex items-center gap-2 cursor-pointer">
+                          <input
+                            type="radio"
+                            checked={useProfileAddress}
+                            onChange={() => {
+                              setUseProfileAddress(true);
+                              setFormData(prev => ({ ...prev, address: profileAddress }));
+                            }}
+                          />
+                          <span className="text-sm">Gunakan alamat profil</span>
+                        </label>
+                        <label className="flex items-center gap-2 cursor-pointer">
+                          <input
+                            type="radio"
+                            checked={!useProfileAddress}
+                            onChange={() => {
+                              setUseProfileAddress(false);
+                              setFormData(prev => ({ ...prev, address: '' }));
+                            }}
+                          />
+                          <span className="text-sm">Masukkan alamat lain</span>
+                        </label>
+                      </div>
+                      <div className={`transition-all duration-300 ${useProfileAddress ? 'opacity-100 max-h-40' : 'opacity-0 max-h-0 overflow-hidden'}`}> 
+                        <div className="p-3 bg-gray-50 rounded-lg border text-gray-700">{profileAddress || '-'}</div>
+                      </div>
+                      <div className={`transition-all duration-300 ${!useProfileAddress ? 'opacity-100 max-h-40' : 'opacity-0 max-h-0 overflow-hidden'}`}> 
+                        <Textarea
+                          id="address"
+                          value={formData.address}
+                          onChange={(e) => setFormData(prev => ({ ...prev, address: e.target.value }))}
+                          placeholder="Masukkan alamat lengkap untuk penjemputan"
+                          className="transition-all duration-200 focus:ring-2 focus:ring-bank-green-500"
+                          rows={3}
+                          required={!useProfileAddress}
+                          disabled={useProfileAddress}
+                        />
+                      </div>
                     </div>
 
                     <div>
@@ -642,7 +673,12 @@ const RequestJemput = () => {
                           <span className="text-gray-400 text-xs font-mono">#{request.id}</span>
                         </div>
                         <div className="flex flex-wrap gap-4 items-center text-sm text-gray-600 mb-1">
-                          <div className="flex items-center gap-1"><Calendar className="w-4 h-4" /> {formatDate(request.date)}</div>
+                          <div className="flex items-center gap-1"><Calendar className="w-4 h-4" />
+                            {request.date && !isNaN(new Date(request.date).getTime())
+                              ? new Date(request.date).toLocaleDateString('id-ID')
+                              : <span className="text-gray-400 italic">-</span>
+                            }
+                          </div>
                           {request.time_slot && <div className="flex items-center gap-1"><Clock className="w-4 h-4" /> {request.time_slot}</div>}
                         </div>
                         <div className="flex items-center gap-2 text-gray-700 font-medium mb-1"><MapPin className="w-4 h-4 text-pink-500" />{request.address}</div>
