@@ -101,10 +101,8 @@ const AdminNasabah = () => {
     }
 
     // Simulate loading
-    setTimeout(() => {
-      setNasabahList(mockNasabah);
-      setIsLoading(false);
-    }, 1500);
+    setNasabahList(mockNasabah);
+    setIsLoading(false);
   }, [navigate]);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {

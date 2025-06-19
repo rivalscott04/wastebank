@@ -169,7 +169,7 @@ const TukarPoin = () => {
     setShowConfirmDialog(false);
     try {
       await api.post('/reward-redemptions', { reward_id: selectedItem.id });
-      toast.success('Penukaran Berhasil!', { description: `${selectedItem.name} berhasil ditukar dengan ${selectedItem.points_required} poin` });
+      toast({ title: 'Penukaran Berhasil!', description: `${selectedItem.name} berhasil ditukar dengan ${selectedItem.points_required} poin`, variant: 'default' });
       setActiveTab('history');
       // Refresh data
       const me = await api.get('/auth/me');
@@ -226,21 +226,23 @@ const TukarPoin = () => {
 
   const handleCancel = async (id: string) => {
     try {
-      await api.post(`/reward-redemptions/${id}/cancel`);
-      toast.success('Penukaran berhasil dibatalkan');
+      await api.patch(`/reward-redemptions/${id}/status`, { status: 'cancelled' });
+      toast({ title: 'Berhasil membatalkan penukaran', variant: 'default' });
       // Refresh data
-      const historyRes = await api.get('/reward-redemptions');
-      setExchangeHistory((historyRes.data || []).map((h: any) => ({
-        id: h.id,
-        reward_name: h.reward?.name || '-',
-        points_used: h.points_spent,
-        date: h.createdAt,
-        status: h.status
-      })));
-    } catch (e) {
-      toast.error('Gagal membatalkan penukaran');
+      const me = await api.get('/auth/me');
+      setUserPoints(me.data.total_points || 0);
+    } catch (err) {
+      toast({ title: 'Gagal membatalkan penukaran', variant: 'destructive' });
     }
+    setOpenCancelDialog(false);
+    setSelectedCancelId(null);
   };
+
+  // Hitung total poin pending
+  const totalPendingPoints = exchangeHistory
+    .filter(item => item.status === 'pending')
+    .reduce((sum, item) => sum + item.points_used, 0);
+  const displayedPoints = userPoints - totalPendingPoints;
 
   if (isLoading) {
     return (
@@ -339,7 +341,7 @@ const TukarPoin = () => {
               <div className={`grid gap-4 ${isMobile ? 'grid-cols-1' : 'grid-cols-2 md:grid-cols-3'}`}>
                 {filteredItems.map((item) => {
                   const IconComponent = getCategoryIcon(item.category);
-                  const canAfford = userPoints >= item.points_required;
+                  const canAfford = displayedPoints >= item.points_required;
                   const isAvailable = item.is_available && item.stock > 0;
 
                   return (
@@ -365,7 +367,7 @@ const TukarPoin = () => {
                         </div>
                         <Button
                           className="w-full mt-2 text-base py-2 btn-primary hover-scale"
-                          disabled={!item.is_available || userPoints < item.points_required}
+                          disabled={!item.is_available || displayedPoints < item.points_required}
                           onClick={() => handleExchange(item)}
                         >
                           {item.is_available ? 'Tukar' : 'Stok Habis'}

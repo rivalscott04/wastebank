@@ -105,21 +105,11 @@ router.post('/', auth, async (req, res) => {
 // Update redemption status (admin only)
 router.patch('/:id/status', auth, async (req, res) => {
   try {
-    if (req.user.role !== 'admin') {
-      return res.status(403).json({ message: 'Access denied' });
-    }
-
     const { status } = req.body;
     const redemption = await RewardRedemption.findByPk(req.params.id, {
       include: [
-        {
-          model: Reward,
-          as: 'reward'
-        },
-        {
-          model: User,
-          as: 'user'
-        }
+        { model: Reward, as: 'reward' },
+        { model: User, as: 'user' }
       ]
     });
 
@@ -127,13 +117,24 @@ router.patch('/:id/status', auth, async (req, res) => {
       return res.status(404).json({ message: 'Redemption not found' });
     }
 
-    // If cancelling the redemption, return points to user
+    // Admin boleh update status apapun
+    // Nasabah hanya boleh membatalkan miliknya sendiri yang masih pending
+    if (
+      req.user.role !== 'admin' &&
+      (
+        redemption.user_id !== req.user.id ||
+        status !== 'cancelled' ||
+        redemption.status !== 'pending'
+      )
+    ) {
+      return res.status(403).json({ message: 'Access denied' });
+    }
+
+    // Jika membatalkan, kembalikan poin & stok
     if (status === 'cancelled' && redemption.status !== 'cancelled') {
       await redemption.user.update({
         total_points: redemption.user.total_points + redemption.points_spent
       });
-
-      // Return stock to reward
       await redemption.reward.update({
         stock: redemption.reward.stock + 1
       });
