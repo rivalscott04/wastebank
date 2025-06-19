@@ -204,10 +204,10 @@ const ProfilNasabah = () => {
         <main className="p-4 pt-16 lg:p-8 lg:pt-8">
           {/* Header */}
           <div className="mb-8 animate-fade-in">
-            <h2 className="text-2xl font-bold text-gray-800 mb-2 flex items-center">
+            <h1 className="text-2xl font-bold flex items-center gap-2 pl-12 lg:pl-0">
               <User className="w-6 h-6 mr-3 text-bank-green-600" />
               Profil Saya
-            </h2>
+            </h1>
             <p className="text-gray-600">
               Kelola informasi profil dan data pribadi Anda
             </p>

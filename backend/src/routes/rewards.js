@@ -2,6 +2,7 @@ const express = require('express');
 const router = express.Router();
 const Reward = require('../models/Reward');
 const auth = require('../middleware/auth');
+const { Op } = require('sequelize');
 
 // Get all rewards
 router.get('/', async (req, res) => {

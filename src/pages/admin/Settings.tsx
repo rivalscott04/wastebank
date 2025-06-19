@@ -8,6 +8,8 @@ import { toast } from '@/hooks/use-toast';
 import AdminSidebar from '@/components/AdminSidebar';
 import SkeletonLoader from '@/components/SkeletonLoader';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogTrigger, DialogClose } from '@/components/ui/dialog';
+import { Package } from 'lucide-react';
+import ConfirmDialog from '@/components/ConfirmDialog';
 
 interface WasteCategory {
   id: number;
@@ -36,6 +38,8 @@ const Settings = () => {
   });
   const [isEdit, setIsEdit] = useState(false);
   const [open, setOpen] = useState(false);
+  const [openDeleteDialog, setOpenDeleteDialog] = useState(false);
+  const [selectedDeleteId, setSelectedDeleteId] = useState<number | null>(null);
 
   const fetchData = async () => {
     setIsLoading(true);
@@ -111,7 +115,6 @@ const Settings = () => {
   };
 
   const handleDelete = async (id: number) => {
-    if (!window.confirm('Yakin ingin menghapus harga ini?')) return;
     try {
       const res = await fetch(`/api/waste-prices/${id}`, {
         method: 'DELETE',
@@ -155,12 +158,17 @@ const Settings = () => {
     <div className="min-h-screen bg-gray-50 flex">
       <AdminSidebar />
       <div className="flex-1 lg:ml-0 p-4 lg:p-8">
-        <Card className="mb-8">
-          <CardHeader className="flex flex-row items-center justify-between">
-            <CardTitle>Pengaturan Harga Sampah</CardTitle>
+        <Card className="mb-8 shadow-lg border-0">
+          <CardHeader className="flex flex-row items-center justify-between pb-2">
+            <CardTitle className="flex items-center gap-2 text-lg md:text-xl">
+              <h1 className="text-2xl font-bold flex items-center gap-2 pl-12 lg:pl-0">
+                <Package className="w-6 h-6 mr-3 text-bank-green-600" />
+                Pengaturan Harga Sampah
+              </h1>
+            </CardTitle>
             <Dialog open={open} onOpenChange={setOpen}>
               <DialogTrigger asChild>
-                <Button type="button" className="btn-primary" onClick={openAddModal}>Tambah Harga</Button>
+                <Button type="button" className="btn-primary flex items-center gap-2" onClick={openAddModal}><span className="hidden sm:inline">Tambah Harga</span> <span className="sm:hidden">+</span></Button>
               </DialogTrigger>
               <DialogContent>
                 <DialogHeader>
@@ -202,44 +210,82 @@ const Settings = () => {
               </DialogContent>
             </Dialog>
           </CardHeader>
-        </Card>
-
-        <Card>
-          <CardHeader>
-            <CardTitle>Daftar Harga Sampah</CardTitle>
-          </CardHeader>
           <CardContent>
-            {isLoading ? <SkeletonLoader type="table" /> : (
-              <div className="overflow-x-auto">
-                <table className="min-w-full border">
-                  <thead>
-                    <tr className="bg-gray-100">
-                      <th className="p-2 border">Icon</th>
-                      <th className="p-2 border">Kategori</th>
-                      <th className="p-2 border">Harga/Kg</th>
-                      <th className="p-2 border">Poin/Kg</th>
-                      <th className="p-2 border">Aksi</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {wastePrices.map(price => (
-                      <tr key={price.id} className="hover:bg-gray-50">
-                        <td className="p-2 border text-2xl text-center">{price.icon}</td>
-                        <td className="p-2 border">{price.category?.name || '-'}</td>
-                        <td className="p-2 border">Rp {Number(price.price_per_kg).toLocaleString('id-ID')}</td>
-                        <td className="p-2 border">{price.points_per_kg} poin</td>
-                        <td className="p-2 border space-x-2">
-                          <Button type="button" size="sm" variant="outline" onClick={() => openEditModal(price)}>Edit</Button>
-                          <Button type="button" size="sm" variant="destructive" onClick={() => handleDelete(price.id)}>Hapus</Button>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
+            <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-2 mb-4">
+              <Input placeholder="Cari kategori..." className="max-w-xs" />
+              <div className="flex gap-1 items-center text-xs text-gray-500">
+                <span>1-5 dari 5</span>
+                <Button size="icon" variant="ghost" className="rounded-full"><span>&lt;</span></Button>
+                <Button size="icon" variant="ghost" className="rounded-full"><span>&gt;</span></Button>
               </div>
-            )}
+            </div>
+            <div className="hidden md:block overflow-x-auto w-full">
+              <table className="min-w-full bg-white rounded-xl overflow-hidden text-sm md:text-base shadow-sm">
+                <thead>
+                  <tr className="bg-bank-green-100 text-bank-green-800">
+                    <th className="p-3 font-semibold text-left">Icon</th>
+                    <th className="p-3 font-semibold text-left">Kategori</th>
+                    <th className="p-3 font-semibold text-left">Harga/Kg</th>
+                    <th className="p-3 font-semibold text-left">Poin/Kg</th>
+                    <th className="p-3 font-semibold text-left whitespace-nowrap min-w-[160px]">Aksi</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {wastePrices.map(price => (
+                    <tr key={price.id} className="group hover:bg-bank-green-50 transition-all duration-150 border-b last:border-b-0">
+                      <td className="p-3 font-semibold text-2xl text-center">{price.icon}</td>
+                      <td className="p-3 font-semibold text-bank-green-700">{price.category?.name || '-'}</td>
+                      <td className="p-3 text-blue-700 font-bold">Rp {Number(price.price_per_kg).toLocaleString('id-ID')}</td>
+                      <td className="p-3"><span className="inline-block bg-blue-100 text-blue-700 px-2 py-1 rounded-full text-xs font-semibold animate-pulse">{price.points_per_kg} poin</span></td>
+                      <td className="p-3 space-x-1 flex gap-1 whitespace-nowrap min-w-[160px]">
+                        <Button type="button" size="sm" variant="outline" className="border-bank-green-200 text-bank-green-700 hover:bg-bank-green-100 hover:text-bank-green-900 flex flex-row items-center gap-1" onClick={() => openEditModal(price)}><svg className="mr-1" width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 1 1 3 3L7 19.5 3 21l1.5-4L16.5 3.5z"/></svg> Edit</Button>
+                        <Button type="button" size="sm" variant="destructive" className="hover:bg-red-100 hover:text-red-800 flex flex-row items-center gap-1" onClick={() => { setSelectedDeleteId(price.id); setOpenDeleteDialog(true); }}><svg className="mr-1" width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6M1 7h22M8 7V5a2 2 0 012-2h4a2 2 0 012 2v2"/></svg> Hapus</Button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+            <div className="grid md:hidden gap-4 mt-4">
+              {wastePrices.map(price => (
+                <div key={price.id} className="w-full max-w-full bg-white rounded-xl shadow px-3 py-4 flex flex-col gap-2 border border-bank-green-100">
+                  <div className="flex items-center gap-3">
+                    <span className="w-10 h-10 rounded flex items-center justify-center text-2xl bg-bank-green-100">{price.icon}</span>
+                    <div className="flex-1 min-w-0">
+                      <div className="font-semibold text-bank-green-700 text-base break-words">{price.category?.name || '-'}</div>
+                      <div className="text-xs text-gray-400">Kategori</div>
+                    </div>
+                    <span className="inline-block bg-blue-100 text-blue-700 px-2 py-1 rounded-full text-xs font-semibold animate-pulse whitespace-nowrap">{price.points_per_kg} poin</span>
+                  </div>
+                  <div className="flex gap-4 mt-2">
+                    <div className="flex-1">
+                      <div className="text-xs text-gray-500">Harga/Kg</div>
+                      <div className="font-bold text-blue-700">Rp {Number(price.price_per_kg).toLocaleString('id-ID')}</div>
+                    </div>
+                    <div className="flex-1">
+                      <div className="text-xs text-gray-500">Poin/Kg</div>
+                      <div className="font-bold">{price.points_per_kg}</div>
+                    </div>
+                  </div>
+                  <div className="flex gap-2 mt-3">
+                    <Button type="button" size="sm" variant="outline" className="border-bank-green-200 text-bank-green-700 hover:bg-bank-green-100 hover:text-bank-green-900 flex flex-row items-center gap-1" onClick={() => openEditModal(price)}><svg className="mr-1" width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 1 1 3 3L7 19.5 3 21l1.5-4L16.5 3.5z"/></svg> Edit</Button>
+                    <Button type="button" size="sm" variant="destructive" className="hover:bg-red-100 hover:text-red-800 flex flex-row items-center gap-1" onClick={() => { setSelectedDeleteId(price.id); setOpenDeleteDialog(true); }}><svg className="mr-1" width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6M1 7h22M8 7V5a2 2 0 012-2h4a2 2 0 012 2v2"/></svg> Hapus</Button>
+                  </div>
+                </div>
+              ))}
+            </div>
           </CardContent>
         </Card>
+        <ConfirmDialog
+          isOpen={openDeleteDialog}
+          onClose={() => setOpenDeleteDialog(false)}
+          onConfirm={() => { if (selectedDeleteId) handleDelete(selectedDeleteId); }}
+          title="Hapus Harga Sampah?"
+          description="Data harga sampah yang dihapus tidak bisa dikembalikan. Yakin ingin menghapus?"
+          confirmText="Hapus"
+          cancelText="Batal"
+          type="danger"
+        />
       </div>
     </div>
   );

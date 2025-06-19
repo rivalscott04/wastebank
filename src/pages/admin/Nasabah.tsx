@@ -210,10 +210,7 @@ const AdminNasabah = () => {
       <div className="flex-1 lg:ml-0">
         <main className="p-4 lg:p-8">
           <div className="mb-8">
-            <h2 className="text-2xl font-bold text-gray-800 mb-2 flex items-center">
-              <Users className="w-6 h-6 mr-3 text-bank-green-600" />
-              Kelola Nasabah
-            </h2>
+            <h1 className="text-2xl font-bold flex items-center gap-2 pl-12 lg:pl-0"><Users className="w-7 h-7 text-bank-green-700" /> Kelola Nasabah</h1>
             <p className="text-gray-600">
               Kelola data nasabah Bank Sampah Digital
             </p>
@@ -300,7 +297,7 @@ const AdminNasabah = () => {
               </div>
             </CardHeader>
             <CardContent className="p-0">
-              <Table>
+              <Table className="hidden md:table w-full">
                 <TableHeader>
                   <TableRow className="bg-gray-50/50">
                     <TableHead className="font-semibold text-gray-700">Nama</TableHead>
@@ -384,6 +381,30 @@ const AdminNasabah = () => {
               </Table>
             </CardContent>
           </Card>
+
+          <div className="grid md:hidden gap-4 mt-4">
+            {nasabahList.map(nasabah => (
+              <div key={nasabah.id} className="w-full max-w-full bg-white rounded-xl shadow px-3 py-4 flex flex-col gap-2 border border-bank-green-100">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-full bg-bank-green-100 flex items-center justify-center font-bold text-bank-green-700 text-lg">{nasabah.name[0]}</div>
+                  <div className="flex-1 min-w-0">
+                    <div className="font-semibold text-bank-green-700 text-base break-words">{nasabah.name}</div>
+                    <div className="text-xs text-gray-400">Nasabah</div>
+                  </div>
+                  <div className="font-bold text-blue-700 whitespace-nowrap">{nasabah.total_points} poin</div>
+                </div>
+                <div className="flex flex-col gap-1 mt-2 text-sm">
+                  <div className="flex items-center gap-2 text-gray-500 break-words"><Mail className="w-4 h-4" /> {nasabah.email}</div>
+                  <div className="flex items-center gap-2 text-gray-500 break-words"><Phone className="w-4 h-4" /> {nasabah.phone}</div>
+                  <div className="flex items-center gap-2 text-gray-500 break-words"><MapPin className="w-4 h-4" /> {nasabah.address}</div>
+                </div>
+                <div className="flex gap-2 mt-3">
+                  <Button type="button" size="sm" variant="outline" className="border-bank-green-200 text-bank-green-700 hover:bg-bank-green-100 hover:text-bank-green-900 flex flex-row items-center gap-1 flex-1 w-full" onClick={() => openEditDialog(nasabah)}><Edit className="mr-1 w-4 h-4" /> Edit</Button>
+                  <Button type="button" size="sm" variant="destructive" className="hover:bg-red-100 hover:text-red-800 flex flex-row items-center gap-1 flex-1 w-full" onClick={() => handleDelete(nasabah)}><Trash2 className="mr-1 w-4 h-4" /> Hapus</Button>
+                </div>
+              </div>
+            ))}
+          </div>
         </main>
       </div>
 

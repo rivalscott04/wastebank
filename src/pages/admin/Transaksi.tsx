@@ -223,10 +223,10 @@ const Transaksi = () => {
       <div className="flex-1 lg:ml-0">
         <main className="p-4 lg:p-8">
           <div className="mb-8">
-            <h2 className="text-2xl font-bold text-gray-800 mb-2 flex items-center">
+            <h1 className="text-2xl font-bold flex items-center gap-2 pl-12 lg:pl-0">
               <ShoppingCart className="w-6 h-6 mr-3 text-bank-green-600" />
               Kelola Transaksi
-            </h2>
+            </h1>
             <p className="text-gray-600">
               Kelola semua transaksi penjualan sampah
             </p>
@@ -404,6 +404,31 @@ const Transaksi = () => {
               </Table>
             </CardContent>
           </Card>
+
+          <div className="grid md:hidden gap-4 mt-4">
+            {transactions.map(transaction => (
+              <div key={transaction.id} className="w-full max-w-full bg-white rounded-xl shadow px-3 py-4 flex flex-col gap-2 border border-bank-green-100 mb-4">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-full bg-bank-green-100 flex items-center justify-center font-bold text-bank-green-700 text-lg">{transaction.user_name[0]}</div>
+                  <div className="flex-1 min-w-0">
+                    <div className="font-semibold text-bank-green-700 text-base break-words">{transaction.user_name}</div>
+                    <div className="text-xs text-gray-400">Transaksi</div>
+                  </div>
+                  <div className="font-bold text-purple-700 whitespace-nowrap">{transaction.total_points} poin</div>
+                </div>
+                <div className="flex flex-col gap-1 mt-2 text-sm">
+                  <div className="flex items-center gap-2 text-gray-500 break-words"><Star className="w-4 h-4" /> {transaction.waste_name}</div>
+                  <div className="flex items-center gap-2 text-gray-500 break-words"><Weight className="w-4 h-4" /> {transaction.weight} Kg</div>
+                  <div className="flex items-center gap-2 text-gray-500 break-words"><DollarSign className="w-4 h-4" /> {formatCurrency(transaction.total_price)}</div>
+                  <div className="flex items-center gap-2 text-gray-500 break-words"><Calendar className="w-4 h-4" /> {transaction.date && !isNaN(new Date(transaction.date).getTime()) ? new Date(transaction.date).toLocaleDateString('id-ID') : <span className="text-gray-400 italic">-</span>}</div>
+                </div>
+                <div className="flex gap-2 mt-3">
+                  <Button type="button" size="sm" variant="outline" className="border-bank-green-200 text-bank-green-700 hover:bg-bank-green-100 hover:text-bank-green-900 flex flex-row items-center gap-1 flex-1 w-full" onClick={() => openEditDialog(transaction)}><Edit className="mr-1 w-4 h-4" /> Edit</Button>
+                  <Button type="button" size="sm" variant="destructive" className="hover:bg-red-100 hover:text-red-800 flex flex-row items-center gap-1 flex-1 w-full" onClick={() => handleDelete(transaction)}><Trash2 className="mr-1 w-4 h-4" /> Hapus</Button>
+                </div>
+              </div>
+            ))}
+          </div>
         </main>
       </div>
 

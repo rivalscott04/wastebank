@@ -18,6 +18,7 @@ import {
   Download
 } from 'lucide-react';
 import { toast } from '@/hooks/use-toast';
+import api from '@/services/api';
 
 interface Transaction {
   id: string;
@@ -37,80 +38,41 @@ const RiwayatTransaksi = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [filterType, setFilterType] = useState<'all' | 'pickup' | 'exchange'>('all');
   const [sortOrder, setSortOrder] = useState<'desc' | 'asc'>('desc');
-
-  // Mock data - replace with actual API call
-  const [transactions] = useState<Transaction[]>([
-    {
-      id: 'TRX001',
-      date: '2024-06-14',
-      type: 'pickup',
-      description: 'Penjemputan Sampah Plastik',
-      points: 150,
-      status: 'completed',
-      waste_type: 'Plastik',
-      weight: 5.2
-    },
-    {
-      id: 'TRX002',
-      date: '2024-06-12',
-      type: 'exchange',
-      description: 'Tukar Poin - Pulsa Rp 10.000',
-      points: -100,
-      status: 'completed',
-      reward_item: 'Pulsa Rp 10.000'
-    },
-    {
-      id: 'TRX003',
-      date: '2024-06-10',
-      type: 'pickup',
-      description: 'Penjemputan Sampah Kertas',
-      points: 80,
-      status: 'pending',
-      waste_type: 'Kertas',
-      weight: 3.1
-    },
-    {
-      id: 'TRX004',
-      date: '2024-06-08',
-      type: 'pickup',
-      description: 'Penjemputan Sampah Logam',
-      points: 200,
-      status: 'completed',
-      waste_type: 'Logam',
-      weight: 2.5
-    },
-    {
-      id: 'TRX005',
-      date: '2024-06-05',
-      type: 'exchange',
-      description: 'Tukar Poin - Voucher Belanja',
-      points: -250,
-      status: 'completed',
-      reward_item: 'Voucher Belanja Rp 25.000'
-    }
-  ]);
+  const [transactions, setTransactions] = useState<Transaction[]>([]);
 
   useEffect(() => {
     const loadData = async () => {
       setIsLoading(true);
-      await new Promise(resolve => setTimeout(resolve, 1000));
-
-      // Check if user is logged in and is nasabah
-      const user = localStorage.getItem('user');
-      if (!user) {
-        navigate('/login');
-        return;
+      try {
+        const user = localStorage.getItem('user');
+        if (!user) {
+          navigate('/login');
+          return;
+        }
+        const userData = JSON.parse(user);
+        if (userData.role !== 'nasabah') {
+          navigate('/login');
+          return;
+        }
+        const res = await api.get('/transactions');
+        // Mapping agar sesuai Transaction[]
+        const data = (res.data || res).map((trx: any) => ({
+          id: trx.id,
+          date: trx.createdAt || trx.date,
+          type: trx.type || (trx.items && trx.items.length > 0 ? 'pickup' : 'exchange'),
+          description: trx.notes || (trx.items && trx.items.length > 0 ? `Penjemputan Sampah ${trx.items.map((i:any)=>i.category?.name).join(', ')}` : 'Tukar Poin'),
+          points: trx.total_points || trx.points || 0,
+          status: trx.payment_status || trx.status || 'completed',
+          waste_type: trx.items && trx.items.length > 0 ? trx.items.map((i:any)=>i.category?.name).join(', ') : undefined,
+          weight: trx.total_weight || undefined,
+          reward_item: trx.reward_item || undefined
+        }));
+        setTransactions(data);
+      } catch (e) {
+        toast.error('Gagal memuat riwayat transaksi');
       }
-
-      const userData = JSON.parse(user);
-      if (userData.role !== 'nasabah') {
-        navigate('/login');
-        return;
-      }
-
       setIsLoading(false);
     };
-
     loadData();
   }, [navigate]);
 
@@ -200,7 +162,7 @@ const RiwayatTransaksi = () => {
           {/* Header */}
           <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
             <div>
-              <h1 className="text-2xl lg:text-3xl font-bold text-gray-800 flex items-center">
+              <h1 className="text-2xl font-bold flex items-center gap-2 pl-12 lg:pl-0">
                 <History className="w-8 h-8 mr-3 text-bank-green-600" />
                 Riwayat Transaksi
               </h1>

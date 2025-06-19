@@ -22,6 +22,8 @@ import {
   CheckCircle
 } from 'lucide-react';
 import { toast } from '@/hooks/use-toast';
+import api from '@/services/api';
+import { useIsMobile } from '@/hooks/use-mobile';
 
 interface RewardItem {
   id: string;
@@ -52,90 +54,11 @@ const TukarPoin = () => {
   const [selectedItem, setSelectedItem] = useState<RewardItem | null>(null);
   const [showConfirmDialog, setShowConfirmDialog] = useState(false);
   const [isExchanging, setIsExchanging] = useState(false);
-
-  // Mock data - replace with actual API call
-  const [rewardItems] = useState<RewardItem[]>([
-    {
-      id: '1',
-      name: 'Pulsa Rp 10.000',
-      description: 'Pulsa untuk semua operator',
-      points_required: 100,
-      category: 'pulsa',
-      stock: 50,
-      is_available: true
-    },
-    {
-      id: '2',
-      name: 'Pulsa Rp 25.000',
-      description: 'Pulsa untuk semua operator',
-      points_required: 250,
-      category: 'pulsa',
-      stock: 30,
-      is_available: true
-    },
-    {
-      id: '3',
-      name: 'Voucher Belanja Rp 50.000',
-      description: 'Voucher belanja di minimarket',
-      points_required: 500,
-      category: 'voucher',
-      stock: 20,
-      is_available: true
-    },
-    {
-      id: '4',
-      name: 'Voucher Grab Food Rp 30.000',
-      description: 'Voucher makanan online',
-      points_required: 300,
-      category: 'food',
-      stock: 15,
-      is_available: true
-    },
-    {
-      id: '5',
-      name: 'Power Bank 10.000mAh',
-      description: 'Power bank portable berkualitas',
-      points_required: 800,
-      category: 'electronics',
-      stock: 5,
-      is_available: true
-    },
-    {
-      id: '6',
-      name: 'Voucher Steam Rp 100.000',
-      description: 'Voucher game Steam',
-      points_required: 1000,
-      category: 'other',
-      stock: 10,
-      is_available: true
-    },
-    {
-      id: '7',
-      name: 'Tumbler Stainless Steel',
-      description: 'Tumbler ramah lingkungan 500ml',
-      points_required: 600,
-      category: 'other',
-      stock: 0,
-      is_available: false
-    }
-  ]);
-
-  const [exchangeHistory] = useState<ExchangeHistory[]>([
-    {
-      id: 'EXC001',
-      reward_name: 'Pulsa Rp 10.000',
-      points_used: 100,
-      date: '2024-06-12',
-      status: 'completed'
-    },
-    {
-      id: 'EXC002',
-      reward_name: 'Voucher Belanja Rp 25.000',
-      points_used: 250,
-      date: '2024-06-08',
-      status: 'completed'
-    }
-  ]);
+  const [rewardItems, setRewardItems] = useState<RewardItem[]>([]);
+  const [exchangeHistory, setExchangeHistory] = useState<ExchangeHistory[]>([]);
+  const isMobile = useIsMobile();
+  const [openCancelDialog, setOpenCancelDialog] = useState(false);
+  const [selectedCancelId, setSelectedCancelId] = useState<string | null>(null);
 
   const categories = [
     { id: 'all', name: 'Semua', icon: Gift },
@@ -149,30 +72,46 @@ const TukarPoin = () => {
   useEffect(() => {
     const loadData = async () => {
       setIsLoading(true);
-      await new Promise(resolve => setTimeout(resolve, 1000));
-
-      // Check if user is logged in and is nasabah
-      const user = localStorage.getItem('user');
-      if (!user) {
-        navigate('/login');
-        return;
+      try {
+        const user = localStorage.getItem('user');
+        if (!user) {
+          navigate('/login');
+          return;
+        }
+        const userData = JSON.parse(user);
+        if (userData.role !== 'nasabah') {
+          navigate('/login');
+          return;
+        }
+        // Get user points from API
+        const me = await api.get('/auth/me');
+        setUserPoints(me.data.points || 0);
+        // Fetch rewards
+        const rewardsRes = await api.get('/rewards');
+        setRewardItems(rewardsRes.data.map((r: any) => ({
+          id: r.id,
+          name: r.name,
+          description: r.description,
+          points_required: r.points_required,
+          category: r.category || 'other',
+          stock: r.stock,
+          image_url: r.image,
+          is_available: r.is_active && r.stock > 0
+        })));
+        // Fetch exchange history
+        const historyRes = await api.get('/reward-redemptions');
+        setExchangeHistory((historyRes.data || []).map((h: any) => ({
+          id: h.id,
+          reward_name: h.reward?.name || '-',
+          points_used: h.points_spent,
+          date: h.createdAt,
+          status: h.status
+        })));
+      } catch (e) {
+        toast.error('Gagal memuat data tukar poin');
       }
-
-      const userData = JSON.parse(user);
-      if (userData.role !== 'nasabah') {
-        navigate('/login');
-        return;
-      }
-
-      // Get user points from localStorage or API
-      const savedPoints = localStorage.getItem('userPoints');
-      if (savedPoints) {
-        setUserPoints(parseInt(savedPoints));
-      }
-
       setIsLoading(false);
     };
-
     loadData();
   }, [navigate]);
 
@@ -226,30 +165,25 @@ const TukarPoin = () => {
 
   const confirmExchange = async () => {
     if (!selectedItem) return;
-
     setIsExchanging(true);
     setShowConfirmDialog(false);
-
     try {
-      // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 2000));
-
-      // Update user points
-      const newPoints = userPoints - selectedItem.points_required;
-      setUserPoints(newPoints);
-      localStorage.setItem('userPoints', newPoints.toString());
-
-      toast.success("Penukaran Berhasil!", {
-        description: `${selectedItem.name} berhasil ditukar dengan ${selectedItem.points_required} poin`
-      });
-
-      // Switch to history tab
+      await api.post('/reward-redemptions', { reward_id: selectedItem.id });
+      toast.success('Penukaran Berhasil!', { description: `${selectedItem.name} berhasil ditukar dengan ${selectedItem.points_required} poin` });
       setActiveTab('history');
-
+      // Refresh data
+      const me = await api.get('/auth/me');
+      setUserPoints(me.data.points || 0);
+      const historyRes = await api.get('/reward-redemptions');
+      setExchangeHistory((historyRes.data || []).map((h: any) => ({
+        id: h.id,
+        reward_name: h.reward?.name || '-',
+        points_used: h.points_spent,
+        date: h.createdAt,
+        status: h.status
+      })));
     } catch (error) {
-      toast.error("Penukaran Gagal", {
-        description: "Terjadi kesalahan saat menukar poin. Silakan coba lagi."
-      });
+      toast.error('Penukaran Gagal', { description: 'Terjadi kesalahan saat menukar poin. Silakan coba lagi.' });
     } finally {
       setIsExchanging(false);
       setSelectedItem(null);
@@ -290,6 +224,24 @@ const TukarPoin = () => {
     });
   };
 
+  const handleCancel = async (id: string) => {
+    try {
+      await api.post(`/reward-redemptions/${id}/cancel`);
+      toast.success('Penukaran berhasil dibatalkan');
+      // Refresh data
+      const historyRes = await api.get('/reward-redemptions');
+      setExchangeHistory((historyRes.data || []).map((h: any) => ({
+        id: h.id,
+        reward_name: h.reward?.name || '-',
+        points_used: h.points_spent,
+        date: h.createdAt,
+        status: h.status
+      })));
+    } catch (e) {
+      toast.error('Gagal membatalkan penukaran');
+    }
+  };
+
   if (isLoading) {
     return (
       <div className="min-h-screen bg-gray-50">
@@ -311,7 +263,7 @@ const TukarPoin = () => {
         <main className="p-4 pt-16 lg:pt-8 space-y-6">
           {/* Header */}
           <div>
-            <h1 className="text-2xl lg:text-3xl font-bold text-gray-800 flex items-center">
+            <h1 className="text-2xl font-bold flex items-center gap-2 pl-12 lg:pl-0">
               <Gift className="w-8 h-8 mr-3 text-bank-green-600" />
               Tukar Poin
             </h1>
@@ -384,7 +336,7 @@ const TukarPoin = () => {
               </Card>
 
               {/* Rewards Grid */}
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              <div className={`grid gap-4 ${isMobile ? 'grid-cols-1' : 'grid-cols-2 md:grid-cols-3'}`}>
                 {filteredItems.map((item) => {
                   const IconComponent = getCategoryIcon(item.category);
                   const canAfford = userPoints >= item.points_required;
@@ -393,58 +345,30 @@ const TukarPoin = () => {
                   return (
                     <Card
                       key={item.id}
-                      className={`hover:shadow-lg transition-all duration-300 ${
+                      className={`hover:shadow-lg transition-shadow duration-300 ${
                         !isAvailable ? 'opacity-60' : ''
                       }`}
                     >
-                      <CardContent className="p-6">
-                        <div className="flex items-start justify-between mb-4">
-                          <div className={`w-12 h-12 rounded-full flex items-center justify-center ${getCategoryColor(item.category)}`}>
+                      <CardContent className="p-4 flex flex-col gap-2">
+                        <div className="flex items-center gap-3">
+                          <div className={`w-12 h-12 rounded-xl flex items-center justify-center ${getCategoryColor(item.category)}`}>
                             <IconComponent className="w-6 h-6" />
                           </div>
-                          <div className="text-right">
-                            <p className="text-2xl font-bold text-bank-green-600">
-                              {item.points_required.toLocaleString()}
-                            </p>
-                            <p className="text-sm text-gray-500">poin</p>
+                          <div className="flex-1 min-w-0">
+                            <h4 className="font-semibold text-gray-800 truncate">{item.name}</h4>
+                            <p className="text-xs text-gray-500 truncate">{item.description}</p>
                           </div>
                         </div>
-
-                        <div className="space-y-2 mb-4">
-                          <h3 className="font-bold text-gray-800">{item.name}</h3>
-                          <p className="text-sm text-gray-600">{item.description}</p>
-
-                          <div className="flex items-center justify-between">
-                            <Badge variant="outline" className="text-xs">
-                              Stok: {item.stock}
-                            </Badge>
-                            {!isAvailable && (
-                              <Badge className="bg-red-100 text-red-800 border-red-200 text-xs">
-                                Tidak Tersedia
-                              </Badge>
-                            )}
-                          </div>
+                        <div className="flex items-center justify-between mt-2">
+                          <span className="text-sm font-bold text-bank-green-700">{item.points_required} Poin</span>
+                          <span className="text-xs text-gray-500">Stok: {item.stock}</span>
                         </div>
-
                         <Button
+                          className="w-full mt-2 text-base py-2 btn-primary hover-scale"
+                          disabled={!item.is_available || userPoints < item.points_required}
                           onClick={() => handleExchange(item)}
-                          disabled={!canAfford || !isAvailable || isExchanging}
-                          className={`w-full hover-scale ${
-                            canAfford && isAvailable
-                              ? 'bg-bank-green-600 hover:bg-bank-green-700 text-white'
-                              : 'bg-gray-200 text-gray-500 cursor-not-allowed'
-                          }`}
                         >
-                          {!isAvailable ? (
-                            'Tidak Tersedia'
-                          ) : !canAfford ? (
-                            `Butuh ${(item.points_required - userPoints).toLocaleString()} poin lagi`
-                          ) : (
-                            <>
-                              <ShoppingCart className="w-4 h-4 mr-2" />
-                              Tukar Sekarang
-                            </>
-                          )}
+                          {item.is_available ? 'Tukar' : 'Stok Habis'}
                         </Button>
                       </CardContent>
                     </Card>
@@ -478,38 +402,55 @@ const TukarPoin = () => {
                     <h3 className="text-lg font-medium text-gray-600 mb-2">Belum ada riwayat</h3>
                     <p className="text-gray-500">Anda belum pernah menukar poin</p>
                   </div>
-                ) : (
-                  <div className="space-y-4">
-                    {exchangeHistory.map((exchange) => (
-                      <div
-                        key={exchange.id}
-                        className="flex items-center justify-between p-4 border border-gray-200 rounded-lg hover:shadow-md transition-shadow duration-200"
-                      >
-                        <div className="flex items-center space-x-4">
-                          <div className="w-12 h-12 bg-purple-100 rounded-full flex items-center justify-center">
-                            <Gift className="w-6 h-6 text-purple-600" />
-                          </div>
-
-                          <div>
-                            <div className="flex items-center gap-2 mb-1">
-                              <h4 className="font-medium text-gray-800">{exchange.reward_name}</h4>
-                              <Badge className={getStatusColor(exchange.status)}>
-                                {getStatusText(exchange.status)}
-                              </Badge>
-                            </div>
-                            <p className="text-sm text-gray-500">
-                              {exchange.id} • {formatDate(exchange.date)}
-                            </p>
-                          </div>
+                ) : isMobile ? (
+                  <div className="space-y-3">
+                    {exchangeHistory.map((item) => (
+                      <Card key={item.id} className="p-3 flex flex-col gap-2">
+                        <div className="flex items-center justify-between">
+                          <span className="font-semibold text-gray-800">{item.reward_name}</span>
+                          <Badge className={getStatusColor(item.status)}>{getStatusText(item.status)}</Badge>
                         </div>
-
-                        <div className="text-right">
-                          <p className="text-lg font-bold text-red-600">
-                            -{exchange.points_used.toLocaleString()} Poin
-                          </p>
+                        <div className="flex items-center justify-between text-xs text-gray-500">
+                          <span>{formatDate(item.date)}</span>
+                          <span>-{item.points_used} Poin</span>
                         </div>
-                      </div>
+                        {item.status === 'pending' && (
+                          <Button type="button" size="sm" variant="destructive" className="mt-2" onClick={() => { setSelectedCancelId(item.id); setOpenCancelDialog(true); }}>
+                            Batalkan
+                          </Button>
+                        )}
+                      </Card>
                     ))}
+                  </div>
+                ) : (
+                  <div className="overflow-x-auto w-full">
+                    <table className="min-w-full border text-sm md:text-base">
+                      <thead>
+                        <tr className="bg-gray-100">
+                          <th className="p-2 border">Reward</th>
+                          <th className="p-2 border">Tanggal</th>
+                          <th className="p-2 border">Poin</th>
+                          <th className="p-2 border">Status</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {exchangeHistory.map((item) => (
+                          <tr key={item.id} className="hover:bg-gray-50">
+                            <td className="p-2 border">{item.reward_name}</td>
+                            <td className="p-2 border">{formatDate(item.date)}</td>
+                            <td className="p-2 border">-{item.points_used}</td>
+                            <td className="p-2 border">
+                              <Badge className={getStatusColor(item.status)}>{getStatusText(item.status)}</Badge>
+                              {item.status === 'pending' && (
+                                <Button type="button" size="sm" variant="destructive" className="ml-2" onClick={() => { setSelectedCancelId(item.id); setOpenCancelDialog(true); }}>
+                                  Batalkan
+                                </Button>
+                              )}
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
                   </div>
                 )}
               </CardContent>
@@ -532,6 +473,17 @@ const TukarPoin = () => {
         confirmText="Tukar Sekarang"
         cancelText="Batal"
         type="warning"
+      />
+
+      <ConfirmDialog
+        isOpen={openCancelDialog}
+        onClose={() => setOpenCancelDialog(false)}
+        onConfirm={() => { if (selectedCancelId) handleCancel(selectedCancelId); }}
+        title="Batalkan Penukaran?"
+        description="Penukaran yang dibatalkan tidak bisa dikembalikan. Yakin ingin membatalkan?"
+        confirmText="Batalkan"
+        cancelText="Batal"
+        type="danger"
       />
     </div>
   );

@@ -324,7 +324,7 @@ const RequestJemput = () => {
         <main className="p-4 pt-16 lg:pt-8 space-y-6">
           {/* Header */}
           <div>
-            <h1 className="text-2xl lg:text-3xl font-bold text-gray-800 flex items-center">
+            <h1 className="text-2xl font-bold flex items-center gap-2 pl-12 lg:pl-0">
               <Truck className="w-8 h-8 mr-3 text-bank-green-600" />
               Request Jemput Sampah
             </h1>

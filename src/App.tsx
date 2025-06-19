@@ -17,6 +17,7 @@ const AdminKategori = lazy(() => import("./pages/admin/Kategori"));
 const PenjemputanSampah = lazy(() => import("./pages/admin/PenjemputanSampah"));
 const Transaksi = lazy(() => import("./pages/admin/Transaksi"));
 const Settings = lazy(() => import("./pages/admin/Settings"));
+const SettingsRewards = lazy(() => import("./pages/admin/SettingsRewards"));
 
 // Nasabah pages - lazy loaded
 const NasabahDashboard = lazy(() => import("./pages/nasabah/Dashboard"));
@@ -85,6 +86,11 @@ const App = () => (
             <Route path="/admin/settings" element={
               <Suspense fallback={<LoadingFallback type="table" />}>
                 <Settings />
+              </Suspense>
+            } />
+            <Route path="/admin/settings/rewards" element={
+              <Suspense fallback={<LoadingFallback type="table" />}>
+                <SettingsRewards />
               </Suspense>
             } />
 

@@ -178,9 +178,9 @@ const AdminDashboard = () => {
         <main className="p-4 lg:p-8">
           {/* Welcome Section */}
           <div className="mb-8 animate-fade-in">
-            <h2 className="text-2xl font-bold text-gray-800 mb-2">
+            <h1 className="text-2xl font-bold flex items-center gap-2 pl-12 lg:pl-0">
               Dashboard Admin
-            </h2>
+            </h1>
             <p className="text-gray-600">
               Berikut adalah ringkasan aktivitas Bank Sampah Digital hari ini
             </p>

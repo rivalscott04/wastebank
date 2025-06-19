@@ -1,5 +1,5 @@
-import { useState } from 'react';
-import { NavLink, useNavigate } from 'react-router-dom';
+import { useState, useEffect } from 'react';
+import { NavLink, useNavigate, useLocation } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { toast } from '@/hooks/use-toast';
 import {
@@ -12,12 +12,30 @@ import {
   LogOut,
   Recycle,
   PanelLeft,
-  X
+  X,
+  ChevronDown,
+  Gift
 } from 'lucide-react';
 
 const AdminSidebar = () => {
   const navigate = useNavigate();
+  const location = useLocation();
   const [isCollapsed, setIsCollapsed] = useState(false);
+  const isSettingsActive = location.pathname.startsWith('/admin/settings');
+  const [openSetting, setOpenSetting] = useState(isSettingsActive);
+
+  useEffect(() => {
+    if (isSettingsActive) {
+      setOpenSetting(true);
+    } else {
+      setOpenSetting(false);
+    }
+  }, [isSettingsActive]);
+
+  useEffect(() => {
+    if (window.innerWidth < 1024) setIsCollapsed(true);
+    else setIsCollapsed(false);
+  }, []);
 
   const handleLogout = () => {
     localStorage.removeItem('user');
@@ -33,7 +51,6 @@ const AdminSidebar = () => {
     { title: 'Kelola Kategori', path: '/admin/kategori', icon: Package },
     { title: 'Kelola Transaksi', path: '/admin/transaksi', icon: ShoppingCart },
     { title: 'Jemput Sampah', path: '/admin/penjemputan', icon: Truck },
-    { title: 'Pengaturan', path: '/admin/settings', icon: Settings }
   ];
 
   return (
@@ -88,9 +105,6 @@ const AdminSidebar = () => {
                     : 'text-gray-600 hover:bg-gray-100 hover:text-gray-800'
                 }`
               }
-              onClick={() => {
-                // Semua menu sudah aktif, tidak perlu toast pengembangan
-              }}
             >
               <item.icon className="w-5 h-5 flex-shrink-0" />
               {!isCollapsed && (
@@ -98,6 +112,48 @@ const AdminSidebar = () => {
               )}
             </NavLink>
           ))}
+          {/* Pengaturan dengan submenu */}
+          <div className="space-y-1">
+            <button
+              type="button"
+              className={`flex items-center space-x-3 px-3 py-2.5 w-full rounded-lg transition-all duration-200 group ${openSetting || isSettingsActive ? 'bg-bank-green-100 text-bank-green-700 border border-bank-green-200' : 'text-gray-600 hover:bg-gray-100 hover:text-gray-800'}`}
+              onClick={() => setOpenSetting((v) => !v)}
+            >
+              <Settings className="w-5 h-5 flex-shrink-0" />
+              {!isCollapsed && <span className="font-medium truncate flex-1 text-left">Pengaturan</span>}
+              {!isCollapsed && <ChevronDown className={`w-4 h-4 ml-auto transition-transform ${openSetting ? 'rotate-180' : ''}`} />}
+            </button>
+            {(openSetting || isSettingsActive) && !isCollapsed && (
+              <div className="ml-8 overflow-hidden transition-all duration-200 ease-in-out max-h-40 opacity-100 translate-y-0" style={{ maxHeight: openSetting || isSettingsActive ? '200px' : '0', opacity: openSetting || isSettingsActive ? 1 : 0, transform: openSetting || isSettingsActive ? 'translateY(0)' : 'translateY(-10px)' }}>
+                <NavLink
+                  to="/admin/settings"
+                  className={({ isActive }) =>
+                    `flex items-center gap-2 px-3 py-2 rounded-lg font-medium text-base transition-all duration-200 ${
+                      location.pathname === '/admin/settings'
+                        ? 'bg-bank-green-50 text-bank-green-700'
+                        : 'text-gray-600 hover:bg-gray-100 hover:text-gray-800'
+                    }`
+                  }
+                >
+                  <Package className="w-5 h-5 flex-shrink-0" />
+                  <span>Harga Sampah</span>
+                </NavLink>
+                <NavLink
+                  to="/admin/settings/rewards"
+                  className={({ isActive }) =>
+                    `flex items-center gap-2 px-3 py-2 rounded-lg font-medium text-base transition-all duration-200 ${
+                      location.pathname === '/admin/settings/rewards'
+                        ? 'bg-bank-green-50 text-bank-green-700'
+                        : 'text-gray-600 hover:bg-gray-100 hover:text-gray-800'
+                    }`
+                  }
+                >
+                  <Gift className="w-5 h-5 flex-shrink-0" />
+                  <span>Tukar Poin</span>
+                </NavLink>
+              </div>
+            )}
+          </div>
         </nav>
 
         {/* Footer - fixed at bottom */}

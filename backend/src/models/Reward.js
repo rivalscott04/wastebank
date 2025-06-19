@@ -24,7 +24,11 @@ Reward.init({
     defaultValue: 0
   },
   image: DataTypes.STRING,
-  expiry_date: DataTypes.DATE
+  expiry_date: DataTypes.DATE,
+  is_active: {
+    type: DataTypes.BOOLEAN,
+    defaultValue: true
+  }
 }, {
   sequelize,
   modelName: 'Reward'

@@ -160,9 +160,9 @@ const NasabahDashboard = () => {
         <main className="p-4 pt-16 lg:p-8 lg:pt-8">
           {/* Welcome Section */}
           <div className="mb-8 animate-fade-in">
-            <h2 className="text-2xl font-bold text-gray-800 mb-2">
+            <h1 className="text-2xl font-bold flex items-center gap-2 pl-12 lg:pl-0">
               Selamat datang kembali! 👋
-            </h2>
+            </h1>
             <p className="text-gray-600">
               Mari kita lihat progress lingkungan Anda hari ini.
             </p>
