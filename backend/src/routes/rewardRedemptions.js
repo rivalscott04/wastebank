@@ -4,6 +4,7 @@ const RewardRedemption = require('../models/RewardRedemption');
 const Reward = require('../models/Reward');
 const User = require('../models/User');
 const auth = require('../middleware/auth');
+const { Op } = require('sequelize');
 
 // Get all redemptions (admin) or user's redemptions (nasabah)
 router.get('/', auth, async (req, res) => {

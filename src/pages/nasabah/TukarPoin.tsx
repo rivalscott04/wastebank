@@ -85,7 +85,7 @@ const TukarPoin = () => {
         }
         // Get user points from API
         const me = await api.get('/auth/me');
-        setUserPoints(me.data.points || 0);
+        setUserPoints(me.data.total_points || 0);
         // Fetch rewards
         const rewardsRes = await api.get('/rewards');
         setRewardItems(rewardsRes.data.map((r: any) => ({
@@ -173,7 +173,7 @@ const TukarPoin = () => {
       setActiveTab('history');
       // Refresh data
       const me = await api.get('/auth/me');
-      setUserPoints(me.data.points || 0);
+      setUserPoints(me.data.total_points || 0);
       const historyRes = await api.get('/reward-redemptions');
       setExchangeHistory((historyRes.data || []).map((h: any) => ({
         id: h.id,
