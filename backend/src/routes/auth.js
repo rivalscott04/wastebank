@@ -2,7 +2,7 @@ const express = require('express');
 const router = express.Router();
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
-const { User } = require('../models');
+const { User, Transaction } = require('../models');
 const auth = require('../middleware/auth');
 
 // Register
@@ -93,7 +93,47 @@ router.get('/me', auth, async (req, res) => {
     const user = await User.findByPk(req.user.id, {
       attributes: { exclude: ['password'] }
     });
-    res.json(user);
+    if (!user) return res.status(404).json({ message: 'User not found' });
+
+    // Hitung total berat dan total transaksi user
+    const totalWaste = await Transaction.sum('total_weight', {
+      where: { user_id: user.id, payment_status: ['paid', 'completed'] }
+    });
+    const totalTransactions = await Transaction.count({
+      where: { user_id: user.id, payment_status: ['paid', 'completed'] }
+    });
+
+    // Hitung next rank points
+    const points = user.points || 0;
+    let rank = 'Bronze';
+    let nextRankPoints = 1000 - points;
+    if (points >= 10000) {
+      rank = 'Platinum';
+      nextRankPoints = 0;
+    } else if (points >= 5000) {
+      rank = 'Gold';
+      nextRankPoints = 10000 - points;
+    } else if (points >= 1000) {
+      rank = 'Silver';
+      nextRankPoints = 5000 - points;
+    }
+    if (nextRankPoints < 0) nextRankPoints = 0;
+
+    res.json({
+      id: user.id,
+      name: user.name,
+      email: user.email,
+      role: user.role,
+      phone: user.phone,
+      address: user.address,
+      date_of_birth: user.date_of_birth,
+      gender: user.gender,
+      points,
+      rank,
+      next_rank_points: nextRankPoints,
+      total_waste_collected: Number(totalWaste) || 0,
+      total_transactions: totalTransactions
+    });
   } catch (error) {
     console.error(error);
     res.status(500).json({ message: 'Server error' });

@@ -49,9 +49,10 @@ module.exports = {
 
     // WasteCategories
     await queryInterface.bulkInsert('WasteCategories', [
-      { name: 'Plastik', description: 'Sampah plastik', price_per_kg: 2000, points_per_kg: 2, createdAt: new Date(), updatedAt: new Date() },
-      { name: 'Kertas', description: 'Sampah kertas', price_per_kg: 1500, points_per_kg: 1, createdAt: new Date(), updatedAt: new Date() },
-      { name: 'Kaleng', description: 'Sampah kaleng', price_per_kg: 3000, points_per_kg: 3, createdAt: new Date(), updatedAt: new Date() }
+      { name: 'Plastik PET', description: 'Sampah plastik', price_per_kg: 2000, points_per_kg: 2, createdAt: new Date(), updatedAt: new Date() },
+      { name: 'Kertas Kardus', description: 'Sampah kertas', price_per_kg: 1500, points_per_kg: 1, createdAt: new Date(), updatedAt: new Date() },
+      { name: 'Botol Kaca', description: 'Sampah botol kaca', price_per_kg: 5000, points_per_kg: 5, createdAt: new Date(), updatedAt: new Date() },
+      { name: 'Kaleng Aluminium', description: 'Sampah kaleng aluminium', price_per_kg: 8000, points_per_kg: 8, createdAt: new Date(), updatedAt: new Date() }
     ]);
 
     // WasteCollections
@@ -106,6 +107,14 @@ module.exports = {
     await queryInterface.bulkInsert('RewardRedemptions', [
       { user_id: 2, reward_id: 1, points_spent: 1000, status: 'pending', createdAt: new Date(), updatedAt: new Date() }
     ]);
+
+    // WastePrices
+    await queryInterface.bulkInsert('WastePrices', [
+      { category_id: 1, price_per_kg: 3000, points_per_kg: 30, icon: '🥤', createdAt: new Date(), updatedAt: new Date() }, // Plastik PET
+      { category_id: 2, price_per_kg: 2000, points_per_kg: 20, icon: '📦', createdAt: new Date(), updatedAt: new Date() }, // Kertas Kardus
+      { category_id: 3, price_per_kg: 5000, points_per_kg: 50, icon: '🍺', createdAt: new Date(), updatedAt: new Date() }, // Botol Kaca
+      { category_id: 4, price_per_kg: 8000, points_per_kg: 80, icon: '🥫', createdAt: new Date(), updatedAt: new Date() }  // Kaleng Aluminium
+    ]);
   },
   async down(queryInterface, Sequelize) {
     await queryInterface.bulkDelete('RewardRedemptions', null, {});
@@ -116,5 +125,6 @@ module.exports = {
     await queryInterface.bulkDelete('WasteCollections', null, {});
     await queryInterface.bulkDelete('WasteCategories', null, {});
     await queryInterface.bulkDelete('Users', null, {});
+    await queryInterface.bulkDelete('WastePrices', null, {});
   }
 }; 

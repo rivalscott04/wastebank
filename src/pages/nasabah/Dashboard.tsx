@@ -22,20 +22,24 @@ const NasabahDashboard = () => {
   const navigate = useNavigate();
   const [user, setUser] = useState<any>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [userStats, setUserStats] = useState({
+    totalPoints: 0,
+    totalWaste: 0,
+    totalTransactions: 0,
+    rank: '',
+    nextRankPoints: 0
+  });
+  const [wasteTypes, setWasteTypes] = useState<any[]>([]);
 
   useEffect(() => {
-    // Simulate loading time
     const loadData = async () => {
       setIsLoading(true);
-      await new Promise(resolve => setTimeout(resolve, 1500)); // Simulate API call
-
       // Check if user is logged in and is nasabah
       const userData = localStorage.getItem('user');
       if (!userData) {
         navigate('/login');
         return;
       }
-
       const parsedUser = JSON.parse(userData);
       if (parsedUser.role !== 'nasabah') {
         toast.error("Akses Ditolak", {
@@ -44,21 +48,37 @@ const NasabahDashboard = () => {
         navigate('/');
         return;
       }
-
       setUser(parsedUser);
+      try {
+        const res = await fetch('/api/auth/me', {
+          headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
+        });
+        const data = await res.json();
+        setUserStats({
+          totalPoints: data.points || 0,
+          totalWaste: data.total_waste_collected || 0,
+          totalTransactions: data.total_transactions || 0,
+          rank: data.rank || '',
+          nextRankPoints: data.next_rank_points || 0
+        });
+        // Fetch waste prices
+        const priceRes = await fetch('/api/waste-prices', {
+          headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
+        });
+        const prices = await priceRes.json();
+        setWasteTypes(prices.map((p: any) => ({
+          name: p.category?.name || '-',
+          price: `Rp ${Number(p.price_per_kg).toLocaleString('id-ID')}/Kg`,
+          points: `${p.points_per_kg} poin/Kg`,
+          icon: p.icon || ''
+        })));
+      } catch (e) {
+        toast.error('Gagal memuat data dashboard');
+      }
       setIsLoading(false);
     };
-
     loadData();
   }, [navigate]);
-
-  const userStats = {
-    totalPoints: 1250,
-    totalWaste: "45.2 Kg",
-    totalTransactions: 18,
-    rank: "Silver",
-    nextRankPoints: 500
-  };
 
   const recentTransactions = [
     {
@@ -87,56 +107,29 @@ const NasabahDashboard = () => {
     }
   ];
 
-  const wasteTypes = [
-    {
-      name: "Plastik PET",
-      price: "Rp 3.000/Kg",
-      points: "30 poin/Kg",
-      icon: "🥤"
-    },
-    {
-      name: "Kertas Kardus",
-      price: "Rp 2.000/Kg",
-      points: "20 poin/Kg",
-      icon: "📦"
-    },
-    {
-      name: "Botol Kaca",
-      price: "Rp 5.000/Kg",
-      points: "50 poin/Kg",
-      icon: "🍺"
-    },
-    {
-      name: "Kaleng Aluminium",
-      price: "Rp 8.000/Kg",
-      points: "80 poin/Kg",
-      icon: "🥫"
-    }
-  ];
-
   const achievements = [
     {
       title: "First Timer",
       description: "Transaksi pertama",
-      earned: true,
+      earned: userStats.totalTransactions > 0,
       icon: "🎉"
     },
     {
       title: "Eco Warrior",
       description: "50+ Kg sampah terkumpul",
-      earned: true,
+      earned: userStats.totalWaste >= 50,
       icon: "🌱"
     },
     {
       title: "Point Master",
       description: "1000+ poin dikumpulkan",
-      earned: true,
+      earned: userStats.totalPoints >= 1000,
       icon: "⭐"
     },
     {
       title: "Green Champion",
       description: "100+ Kg sampah terkumpul",
-      earned: false,
+      earned: userStats.totalWaste >= 100,
       icon: "🏆"
     }
   ];
@@ -199,7 +192,7 @@ const NasabahDashboard = () => {
                     <div className="flex items-center justify-between">
                       <div>
                         <p className="text-sm font-medium text-gray-600 mb-1">Sampah Terkumpul</p>
-                        <p className="text-2xl font-bold text-blue-600">{userStats.totalWaste}</p>
+                        <p className="text-2xl font-bold text-blue-600">{userStats.totalWaste} Kg</p>
                       </div>
                       <div className="w-12 h-12 bg-blue-100 rounded-xl flex items-center justify-center">
                         <Recycle className="w-6 h-6 text-blue-600" />

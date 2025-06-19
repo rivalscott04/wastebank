@@ -89,11 +89,7 @@ const AdminSidebar = () => {
                 }`
               }
               onClick={() => {
-                if (item.path !== '/admin/dashboard' && item.path !== '/admin/nasabah' && item.path !== '/admin/kategori' && item.path !== '/admin/transaksi' && item.path !== '/admin/penjemputan') {
-                  toast.info("Fitur Dalam Pengembangan", {
-                    description: `${item.title} akan segera tersedia`
-                  });
-                }
+                // Semua menu sudah aktif, tidak perlu toast pengembangan
               }}
             >
               <item.icon className="w-5 h-5 flex-shrink-0" />

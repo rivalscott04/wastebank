@@ -106,8 +106,20 @@ module.exports = {
       createdAt: { allowNull: false, type: Sequelize.DATE },
       updatedAt: { allowNull: false, type: Sequelize.DATE }
     });
+
+    // WastePrices table
+    await queryInterface.createTable('WastePrices', {
+      id: { allowNull: false, autoIncrement: true, primaryKey: true, type: Sequelize.INTEGER },
+      category_id: { type: Sequelize.INTEGER, references: { model: 'WasteCategories', key: 'id' }, onUpdate: 'CASCADE', onDelete: 'CASCADE' },
+      price_per_kg: { type: Sequelize.DECIMAL(10, 2), allowNull: false },
+      points_per_kg: { type: Sequelize.INTEGER, allowNull: false },
+      icon: { type: Sequelize.STRING, allowNull: true },
+      createdAt: { allowNull: false, type: Sequelize.DATE },
+      updatedAt: { allowNull: false, type: Sequelize.DATE }
+    });
   },
   async down(queryInterface, Sequelize) {
+    await queryInterface.dropTable('WastePrices');
     await queryInterface.dropTable('RewardRedemptions');
     await queryInterface.dropTable('Rewards');
     await queryInterface.dropTable('TransactionItems');

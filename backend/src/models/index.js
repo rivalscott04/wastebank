@@ -6,6 +6,7 @@ const Transaction = require('./Transaction');
 const TransactionItem = require('./TransactionItem');
 const Reward = require('./Reward');
 const RewardRedemption = require('./RewardRedemption');
+const WastePrice = require('./WastePrice');
 
 // Define associations after all models are loaded
 const defineAssociations = () => {
@@ -44,6 +45,9 @@ const defineAssociations = () => {
   // RewardRedemption associations
   RewardRedemption.belongsTo(User, { foreignKey: 'user_id', as: 'user' });
   RewardRedemption.belongsTo(Reward, { foreignKey: 'reward_id', as: 'reward' });
+
+  // WastePrice associations
+  WastePrice.belongsTo(WasteCategory, { foreignKey: 'category_id', as: 'category' });
 };
 
 // Call defineAssociations after models are initialized
@@ -57,5 +61,6 @@ module.exports = {
   Transaction,
   TransactionItem,
   Reward,
-  RewardRedemption
+  RewardRedemption,
+  WastePrice
 }; 
