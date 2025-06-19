@@ -53,4 +53,23 @@ router.get('/dashboard/activities', auth, async (req, res) => {
   }
 });
 
+// Endpoint total berat sampah terkumpul
+router.get('/dashboard/total-weight', auth, async (req, res) => {
+  try {
+    if (req.user.role !== 'admin') {
+      return res.status(403).json({ message: 'Access denied' });
+    }
+    // Hitung total berat dari transaksi yang sudah paid/completed
+    const totalWeight = await Transaction.sum('total_weight', {
+      where: {
+        payment_status: ['paid', 'completed']
+      }
+    });
+    res.json({ totalWeight: Number(totalWeight) || 0 });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: 'Server error' });
+  }
+});
+
 module.exports = router; 

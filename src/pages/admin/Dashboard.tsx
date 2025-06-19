@@ -51,13 +51,16 @@ const AdminDashboard = () => {
         }
         setUser(parsedUser);
         // Fetch data
-        const [users, transactions] = await Promise.all([
+        const [users, transactions, totalWeightRes] = await Promise.all([
           userService.getAllUsers(),
-          transactionService.getAllTransactions()
+          transactionService.getAllTransactions(),
+          fetch('/api/dashboard/total-weight', {
+            headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
+          }).then(res => res.json())
         ]);
         setStats({
           totalUsers: users.length,
-          totalWeight: transactions.reduce((sum, t) => sum + Number(t.total_weight || 0), 0),
+          totalWeight: totalWeightRes.totalWeight || 0,
           totalTransactions: transactions.length,
           totalPoints: transactions.reduce((sum, t) => sum + Number(t.total_points || 0), 0)
         });
