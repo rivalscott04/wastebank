@@ -25,6 +25,7 @@ import {
   Clock,
   XCircle
 } from 'lucide-react';
+import { wasteService } from '@/services/waste.service';
 
 interface PickupRequest {
   id: string;
@@ -98,14 +99,11 @@ const PenjemputanSampah = () => {
   useEffect(() => {
     const loadData = async () => {
       setIsLoading(true);
-      await new Promise(resolve => setTimeout(resolve, 1500));
-
       const userData = localStorage.getItem('user');
       if (!userData) {
         navigate('/login');
         return;
       }
-
       const parsedUser = JSON.parse(userData);
       if (parsedUser.role !== 'admin') {
         toast.error("Akses Ditolak", {
@@ -114,12 +112,40 @@ const PenjemputanSampah = () => {
         navigate('/');
         return;
       }
-
       setUser(parsedUser);
-      setPickupRequests(mockPickupRequests);
+      // Fetch dari backend
+      try {
+        const res = await wasteService.getPickupRequests();
+        // Mapping data jika perlu
+        const statusMap: Record<string, PickupRequest['status']> = {
+          pending: 'pending',
+          approved: 'approved',
+          confirmed: 'approved',
+          completed: 'completed',
+          cancelled: 'cancelled',
+          processing: 'approved',
+          in_progress: 'approved',
+        };
+        const data = (res.data || res).map((item: any) => ({
+          id: item.id,
+          user_id: item.user_id,
+          user_name: item.user?.name || '-',
+          waste_id: item.items?.[0]?.category_id || '-',
+          waste_name: item.items && item.items.length > 0
+            ? item.items.map((i: any) => i.category?.name).filter(Boolean).join(', ')
+            : '-',
+          address: item.pickup_address,
+          date_request: item.pickup_date,
+          estimated_weight: item.items?.reduce((sum: number, i: any) => sum + Number(i.estimated_weight || 0), 0),
+          status: statusMap[item.status] || 'pending',
+          created_at: item.createdAt
+        }));
+        setPickupRequests(data);
+      } catch (e) {
+        toast.error('Gagal memuat data penjemputan');
+      }
       setIsLoading(false);
     };
-
     loadData();
   }, [navigate]);
 
@@ -153,8 +179,6 @@ const PenjemputanSampah = () => {
     });
     setIsAddDialogOpen(true);
   };
-
-
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -207,7 +231,7 @@ const PenjemputanSampah = () => {
   const handleStatusChange = (requestId: string, newStatus: string) => {
     setPickupRequests(prev => prev.map(request =>
       request.id === requestId
-        ? { ...request, status: newStatus }
+        ? { ...request, status: newStatus as PickupRequest['status'] }
         : request
     ));
 
@@ -538,8 +562,6 @@ const PenjemputanSampah = () => {
           </form>
         </DialogContent>
       </Dialog>
-
-
 
       {/* Confirm Delete Dialog */}
       <ConfirmDialog

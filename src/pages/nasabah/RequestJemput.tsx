@@ -19,15 +19,18 @@ import {
   Package,
   Plus,
   Trash2,
-  CheckCircle
+  CheckCircle,
+  XCircle
 } from 'lucide-react';
 import { toast } from '@/hooks/use-toast';
+import { wasteService } from '@/services/waste.service';
 
 interface WasteItem {
   id: string;
-  type: string;
+  type: string; // will store category_id as string
   estimated_weight: number;
   description: string;
+  category?: { name: string };
 }
 
 interface PickupRequest {
@@ -38,7 +41,7 @@ interface PickupRequest {
   phone: string;
   notes: string;
   waste_items: WasteItem[];
-  status: 'pending' | 'confirmed' | 'in_progress' | 'completed' | 'cancelled';
+  status: 'pending' | 'confirmed' | 'in_progress' | 'completed' | 'cancelled' | 'approved';
   created_at: string;
 }
 
@@ -62,31 +65,9 @@ const RequestJemput = () => {
     { id: '1', type: '', estimated_weight: 0, description: '' }
   ]);
 
-  // Mock existing requests
-  const [pickupHistory] = useState<PickupRequest[]>([
-    {
-      id: 'REQ001',
-      date: '2024-06-15',
-      time_slot: '09:00-12:00',
-      address: 'Jl. Merdeka No. 123, Jakarta Pusat',
-      phone: '081234567890',
-      notes: 'Sampah di depan rumah',
-      waste_items: [
-        { id: '1', type: 'Plastik', estimated_weight: 5, description: 'Botol plastik bekas' }
-      ],
-      status: 'pending',
-      created_at: '2024-06-14'
-    }
-  ]);
+  const [pickupHistory, setPickupHistory] = useState<PickupRequest[]>([]);
 
-  const wasteTypes = [
-    'Plastik',
-    'Kertas',
-    'Logam',
-    'Kaca',
-    'Elektronik',
-    'Organik'
-  ];
+  const [categories, setCategories] = useState<{ id: number, name: string }[]>([]);
 
   const timeSlots = [
     '08:00-11:00',
@@ -94,6 +75,18 @@ const RequestJemput = () => {
     '13:00-16:00',
     '14:00-17:00'
   ];
+
+  const [selectedRequest, setSelectedRequest] = useState<PickupRequest | null>(null);
+  const [showDetail, setShowDetail] = useState(false);
+
+  const statusMap: Record<string, string> = {
+    pending: 'Menunggu',
+    confirmed: 'Dikonfirmasi',
+    in_progress: 'Dalam Proses',
+    completed: 'Selesai',
+    cancelled: 'Dibatalkan',
+    approved: 'Dikonfirmasi',
+  };
 
   useEffect(() => {
     const loadData = async () => {
@@ -120,11 +113,44 @@ const RequestJemput = () => {
         address: userData.address || ''
       }));
 
+      // Fetch categories from backend
+      try {
+        const cats = await wasteService.getCategories();
+        setCategories(cats);
+      } catch (e) {
+        toast.error('Gagal memuat kategori sampah');
+      }
+
       setIsLoading(false);
     };
 
     loadData();
   }, [navigate]);
+
+  useEffect(() => {
+    if (activeTab === 'history') {
+      wasteService.getPickupRequests().then(res => {
+        const data = (res.data || res).map((item: any) => ({
+          id: item.id,
+          date: item.pickup_date,
+          time_slot: item.pickup_time_slot,
+          address: item.pickup_address,
+          phone: item.phone || item.user?.phone || '',
+          notes: item.notes || '',
+          waste_items: item.items?.map((i: any) => ({
+            id: i.id,
+            type: i.category?.name || '',
+            estimated_weight: i.estimated_weight,
+            description: '',
+            category: i.category
+          })) || [],
+          status: item.status,
+          created_at: item.createdAt
+        }));
+        setPickupHistory(data);
+      });
+    }
+  }, [activeTab]);
 
   const addWasteItem = () => {
     const newItem: WasteItem = {
@@ -186,27 +212,21 @@ const RequestJemput = () => {
     setShowConfirmDialog(false);
 
     try {
-      // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 2000));
-
-      // Here you would make the actual API call
-      const newRequest: PickupRequest = {
-        id: `REQ${Date.now()}`,
-        date: formData.date,
-        time_slot: formData.time_slot,
-        address: formData.address,
-        phone: formData.phone,
+      await wasteService.createPickupRequest({
+        pickup_address: formData.address,
+        pickup_date: formData.date,
+        pickup_time_slot: formData.time_slot,
         notes: formData.notes,
-        waste_items: wasteItems.filter(item => item.type && item.estimated_weight > 0),
-        status: 'pending',
-        created_at: new Date().toISOString()
-      };
-
+        items: wasteItems
+          .filter(item => item.type && item.estimated_weight > 0)
+          .map(item => ({
+            category_id: Number(item.type),
+            estimated_weight: item.estimated_weight
+          }))
+      });
       toast.success("Request Berhasil Dikirim!", {
         description: "Permintaan penjemputan Anda telah diterima dan sedang diproses"
       });
-
-      // Reset form
       setFormData({
         date: '',
         time_slot: '',
@@ -215,10 +235,7 @@ const RequestJemput = () => {
         notes: ''
       });
       setWasteItems([{ id: '1', type: '', estimated_weight: 0, description: '' }]);
-
-      // Switch to history tab
       setActiveTab('history');
-
     } catch (error) {
       toast.error("Gagal Mengirim Request", {
         description: "Terjadi kesalahan saat mengirim permintaan. Silakan coba lagi."
@@ -269,6 +286,21 @@ const RequestJemput = () => {
       year: 'numeric'
     });
   };
+
+  // Helper untuk menggabungkan waste_items dengan kategori sama
+  function groupWasteItems(items: WasteItem[]) {
+    const grouped: Record<string, WasteItem> = {};
+    for (const item of items) {
+      const key = item.category?.name || item.type;
+      if (!key) continue;
+      if (!grouped[key]) {
+        grouped[key] = { ...item, estimated_weight: Number(item.estimated_weight) || 0 };
+      } else {
+        grouped[key].estimated_weight += Number(item.estimated_weight) || 0;
+      }
+    }
+    return Object.values(grouped);
+  }
 
   if (isLoading) {
     return (
@@ -472,9 +504,12 @@ const RequestJemput = () => {
                                 required
                               >
                                 <option value="">Pilih jenis</option>
-                                {wasteTypes.map(type => (
-                                  <option key={type} value={type}>{type}</option>
-                                ))}
+                                {categories.map(cat => {
+                                  const isSelected = wasteItems.some(wi => wi.type === String(cat.id) && wi.id !== item.id);
+                                  return (
+                                    <option key={cat.id} value={cat.id} disabled={isSelected}>{cat.name}</option>
+                                  );
+                                })}
                               </select>
                             </div>
 
@@ -586,57 +621,38 @@ const RequestJemput = () => {
                   <div className="text-center py-12">
                     <Truck className="w-16 h-16 text-gray-300 mx-auto mb-4" />
                     <h3 className="text-lg font-medium text-gray-600 mb-2">Belum ada request</h3>
-                    <p className="text-gray-500">Anda belum pernah mengajukan request penjemputan</p>
+                    <p className="text-gray-500">Ayo ajukan penjemputan sampah pertamamu!</p>
+                    <Button onClick={() => setActiveTab('new')} className="mt-4 bg-bank-green-600 hover:bg-bank-green-700 text-white">Request Jemput Sekarang</Button>
                   </div>
                 ) : (
                   <div className="space-y-4">
                     {pickupHistory.map((request) => (
                       <div
                         key={request.id}
-                        className="border border-gray-200 rounded-lg p-4 hover:shadow-md transition-shadow duration-200"
+                        className="bg-white rounded-xl shadow-md p-5 flex flex-col gap-2 border border-gray-100 hover:shadow-lg transition cursor-pointer group"
+                        onClick={() => { setSelectedRequest(request); setShowDetail(true); }}
                       >
-                        <div className="flex items-start justify-between mb-3">
-                          <div>
-                            <div className="flex items-center gap-2 mb-1">
-                              <h4 className="font-medium text-gray-800">{request.id}</h4>
-                              <Badge className={getStatusColor(request.status)}>
-                                {getStatusText(request.status)}
-                              </Badge>
-                            </div>
-                            <p className="text-sm text-gray-600">
-                              {formatDate(request.date)} • {request.time_slot}
-                            </p>
-                          </div>
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => toast.info("Detail Request", { description: "Akan segera tersedia" })}
-                            className="hover-scale"
-                          >
-                            Detail
-                          </Button>
-                        </div>
-
-                        <div className="space-y-2 text-sm">
-                          <div className="flex items-start gap-2">
-                            <MapPin className="w-4 h-4 text-gray-400 mt-0.5 flex-shrink-0" />
-                            <span className="text-gray-600">{request.address}</span>
-                          </div>
+                        <div className="flex items-center justify-between mb-1">
                           <div className="flex items-center gap-2">
-                            <Phone className="w-4 h-4 text-gray-400" />
-                            <span className="text-gray-600">{request.phone}</span>
+                            {request.status === 'pending' && <Clock className="text-yellow-500 w-5 h-5" />}
+                            {request.status === 'completed' && <CheckCircle className="text-green-500 w-5 h-5" />}
+                            {request.status === 'cancelled' && <XCircle className="text-red-500 w-5 h-5" />}
+                            <span className={`px-3 py-1 rounded-full text-xs font-bold ${getStatusColor(request.status)}`}>{statusMap[request.status] || request.status}</span>
                           </div>
-                          <div className="flex items-center gap-2">
-                            <Package className="w-4 h-4 text-gray-400" />
-                            <span className="text-gray-600">
-                              {request.waste_items.length} jenis sampah •
-                              {request.waste_items.reduce((sum, item) => sum + item.estimated_weight, 0)} kg
-                            </span>
-                          </div>
+                          <span className="text-gray-400 text-xs font-mono">#{request.id}</span>
                         </div>
-
+                        <div className="flex flex-wrap gap-4 items-center text-sm text-gray-600 mb-1">
+                          <div className="flex items-center gap-1"><Calendar className="w-4 h-4" /> {formatDate(request.date)}</div>
+                          {request.time_slot && <div className="flex items-center gap-1"><Clock className="w-4 h-4" /> {request.time_slot}</div>}
+                        </div>
+                        <div className="flex items-center gap-2 text-gray-700 font-medium mb-1"><MapPin className="w-4 h-4 text-pink-500" />{request.address}</div>
+                        <div className="flex flex-wrap gap-4 text-sm">
+                          {/* Di list ringkasan */}
+                          <span><b>{groupWasteItems(request.waste_items).length}</b> jenis: {groupWasteItems(request.waste_items).map(i => i.category?.name).filter(Boolean).join(', ') || '-'}</span>
+                          <span><b>Total:</b> {groupWasteItems(request.waste_items).reduce((sum, i) => sum + (Number(i.estimated_weight) || 0), 0).toFixed(2)} kg</span>
+                        </div>
                         {request.notes && (
-                          <div className="mt-3 p-2 bg-gray-50 rounded text-sm text-gray-600">
+                          <div className="text-xs text-gray-500 bg-gray-50 p-2 rounded-lg mt-2">
                             <strong>Catatan:</strong> {request.notes}
                           </div>
                         )}
@@ -661,6 +677,69 @@ const RequestJemput = () => {
         cancelText="Batal"
         type="success"
       />
+
+      {showDetail && selectedRequest && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-30">
+          <div className="bg-white rounded-xl shadow-2xl max-w-lg w-full p-8 relative animate-fade-in">
+            <button
+              className="absolute top-3 right-3 text-gray-400 hover:text-gray-600 text-2xl"
+              onClick={() => setShowDetail(false)}
+              aria-label="Tutup"
+            >
+              ×
+            </button>
+            <h2 className="text-2xl font-bold mb-4 text-bank-green-700 flex items-center gap-2">
+              <Truck className="w-7 h-7 text-bank-green-600" />
+              Detail Request Jemput
+            </h2>
+            <div className="mb-3 flex items-center gap-2">
+              <span className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold ${getStatusColor(selectedRequest.status)}`}> 
+                {statusMap[selectedRequest.status] || selectedRequest.status}
+              </span>
+            </div>
+            <div className="mb-2 flex items-center gap-2">
+              <Calendar className="w-5 h-5 text-blue-500" />
+              <span className="font-semibold">{formatDate(selectedRequest.date)}</span>
+              {selectedRequest.time_slot && <span className="ml-2 text-gray-500">({selectedRequest.time_slot})</span>}
+            </div>
+            <div className="mb-2 flex items-center gap-2">
+              <MapPin className="w-5 h-5 text-pink-500" />
+              <span>{selectedRequest.address}</span>
+            </div>
+            <div className="mb-2 flex items-center gap-2">
+              <Phone className="w-5 h-5 text-indigo-500" />
+              <span>{selectedRequest.phone}</span>
+            </div>
+            <div className="mb-2 flex items-center gap-2">
+              <User className="w-5 h-5 text-gray-400" />
+              <span className="font-semibold">Catatan:</span>
+              <span className="text-gray-700">{selectedRequest.notes || '-'}</span>
+            </div>
+            <div className="mb-2">
+              <div className="font-semibold mb-1 flex items-center gap-2">
+                <Package className="w-5 h-5 text-green-600" />Jenis Sampah:
+              </div>
+              <ul className="ml-6 space-y-1">
+                {groupWasteItems(selectedRequest.waste_items).map((item, idx) => (
+                  <li key={item.category?.name || item.type} className="flex items-center gap-2">
+                    <span className="inline-block w-2 h-2 rounded-full bg-bank-green-500"></span>
+                    <span className="font-medium text-gray-800">{item.category?.name || 'Tanpa Nama'}</span>
+                    <span className="text-gray-500">- {Number(item.estimated_weight).toFixed(2)} kg</span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+            <div className="flex justify-end mt-6">
+              <button
+                className="px-6 py-2 bg-bank-green-600 text-white rounded-lg font-semibold shadow hover:bg-bank-green-700 transition"
+                onClick={() => setShowDetail(false)}
+              >
+                Tutup
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

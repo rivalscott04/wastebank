@@ -7,6 +7,7 @@ import { Label } from '@/components/ui/label';
 import { Checkbox } from '@/components/ui/checkbox';
 import { toast } from '@/hooks/use-toast';
 import { Recycle, Eye, EyeOff, ArrowLeft } from 'lucide-react';
+import { authService } from '@/services/auth.service';
 
 const Login = () => {
   const navigate = useNavigate();
@@ -17,12 +18,6 @@ const Login = () => {
   });
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
-
-  // Default users untuk demo
-  const defaultUsers = [
-    { email: 'admin@example.com', password: 'password', role: 'admin' },
-    { email: 'nasabah@example.com', password: 'password', role: 'nasabah' }
-  ];
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
@@ -36,27 +31,33 @@ const Login = () => {
     e.preventDefault();
     setIsLoading(true);
 
-    // Simulasi loading
-    await new Promise(resolve => setTimeout(resolve, 1000));
+    try {
+      const response = await authService.login({
+        email: formData.email,
+        password: formData.password
+      });
 
-    // Cek kredensial
-    const user = defaultUsers.find(
-      u => u.email === formData.email && u.password === formData.password
-    );
-
-    if (user) {
-      // Simpan data user ke localStorage (untuk demo)
-      localStorage.setItem('user', JSON.stringify(user));
+      toast({
+        title: "Login berhasil!",
+        description: `Selamat datang, ${response.user.name}!`,
+      });
 
       // Redirect berdasarkan role
-      if (user.role === 'admin') {
+      if (response.user.role === 'admin') {
         navigate('/admin/dashboard');
       } else {
         navigate('/nasabah/dashboard');
       }
+    } catch (error: any) {
+      console.error('Login error:', error);
+      toast({
+        title: "Login gagal!",
+        description: error.response?.data?.message || "Terjadi kesalahan saat login",
+        variant: "destructive",
+      });
+    } finally {
+      setIsLoading(false);
     }
-
-    setIsLoading(false);
   };
 
   return (
@@ -180,8 +181,8 @@ const Login = () => {
             {/* Demo Credentials */}
             <div className="text-xs text-gray-500 bg-gray-50 p-3 rounded-lg">
               <p className="font-medium mb-1">Demo Credentials:</p>
-              <p>Admin: admin@example.com / password</p>
-              <p>Nasabah: nasabah@example.com / password</p>
+              <p>Admin: admin@wastebank.com / admin123</p>
+              <p>Nasabah: budi@example.com / password</p>
             </div>
           </CardContent>
         </Card>

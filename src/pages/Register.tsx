@@ -7,6 +7,7 @@ import { Label } from '@/components/ui/label';
 import { Checkbox } from '@/components/ui/checkbox';
 import { toast } from '@/hooks/use-toast';
 import { Recycle, Eye, EyeOff, ArrowLeft, UserPlus } from 'lucide-react';
+import { authService } from '@/services/auth.service';
 
 const Register = () => {
   const navigate = useNavigate();
@@ -54,31 +55,51 @@ const Register = () => {
     }
 
     if (formData.password.length < 6) {
-      toast.error("Password Terlalu Pendek", {
-        description: "Password minimal 6 karakter"
+      toast({
+        title: "Password Terlalu Pendek",
+        description: "Password minimal 6 karakter",
+        variant: "destructive",
       });
       return;
     }
 
     if (!formData.agreeToTerms) {
-      toast.error("Persetujuan Diperlukan", {
-        description: "Anda harus menyetujui syarat dan ketentuan"
+      toast({
+        title: "Persetujuan Diperlukan",
+        description: "Anda harus menyetujui syarat dan ketentuan",
+        variant: "destructive",
       });
       return;
     }
 
     setIsLoading(true);
 
-    // Simulasi loading
-    await new Promise(resolve => setTimeout(resolve, 2000));
+    try {
+      await authService.register({
+        name: formData.name,
+        email: formData.email,
+        password: formData.password,
+        role: 'nasabah',
+        phone: formData.phone,
+        address: formData.address
+      });
 
-    // Simulasi registrasi berhasil
-    toast.success("Registrasi Berhasil! 🎉", {
-      description: "Akun nasabah Anda telah dibuat. Silakan login untuk melanjutkan."
-    });
+      toast({
+        title: "Registrasi Berhasil! 🎉",
+        description: "Akun nasabah Anda telah dibuat. Silakan login untuk melanjutkan.",
+      });
 
-    setIsLoading(false);
-    navigate('/login');
+      navigate('/login');
+    } catch (error: any) {
+      console.error('Register error:', error);
+      toast({
+        title: "Registrasi gagal!",
+        description: error.response?.data?.message || "Terjadi kesalahan saat registrasi",
+        variant: "destructive",
+      });
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
@@ -242,7 +263,10 @@ const Register = () => {
                   <button
                     type="button"
                     className="text-bank-green-600 hover:text-bank-green-700 font-medium hover:underline"
-                    onClick={() => toast.info("Syarat & Ketentuan", { description: "Halaman akan tersedia segera" })}
+                    onClick={() => toast({
+                      title: "Syarat & Ketentuan",
+                      description: "Halaman akan tersedia segera"
+                    })}
                   >
                     Syarat & Ketentuan
                   </button>
@@ -250,7 +274,10 @@ const Register = () => {
                   <button
                     type="button"
                     className="text-bank-green-600 hover:text-bank-green-700 font-medium hover:underline"
-                    onClick={() => toast.info("Kebijakan Privasi", { description: "Halaman akan tersedia segera" })}
+                    onClick={() => toast({
+                      title: "Kebijakan Privasi",
+                      description: "Halaman akan tersedia segera"
+                    })}
                   >
                     Kebijakan Privasi
                   </button>
@@ -263,7 +290,7 @@ const Register = () => {
                 disabled={isLoading}
                 className="w-full btn-primary py-3 text-base font-medium"
               >
-                {isLoading ? 'Memproses...' : 'Daftar Sekarang'}
+                {isLoading ? 'Mendaftar...' : 'Daftar Sekarang'}
               </Button>
             </form>
 
@@ -285,15 +312,9 @@ const Register = () => {
                   onClick={() => navigate('/login')}
                   className="text-bank-green-600 hover:text-bank-green-700 font-medium hover:underline transition-colors"
                 >
-                  Masuk di sini
+                  Login di sini
                 </button>
               </p>
-            </div>
-
-            {/* Info Note */}
-            <div className="text-xs text-gray-500 bg-blue-50 p-3 rounded-lg border border-blue-200">
-              <p className="font-medium mb-1 text-blue-700">📌 Informasi Penting:</p>
-              <p className="text-blue-600">Pendaftaran ini khusus untuk <strong>Nasabah</strong>. Akun Admin dikelola secara terpisah oleh sistem.</p>
             </div>
           </CardContent>
         </Card>
