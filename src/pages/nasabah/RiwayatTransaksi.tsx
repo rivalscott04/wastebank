@@ -19,6 +19,7 @@ import {
 } from 'lucide-react';
 import { toast } from '@/hooks/use-toast';
 import api from '@/services/api';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogClose } from '@/components/ui/dialog';
 
 interface Transaction {
   id: string;
@@ -39,6 +40,8 @@ const RiwayatTransaksi = () => {
   const [filterType, setFilterType] = useState<'all' | 'pickup' | 'exchange'>('all');
   const [sortOrder, setSortOrder] = useState<'desc' | 'asc'>('desc');
   const [transactions, setTransactions] = useState<Transaction[]>([]);
+  const [openDetail, setOpenDetail] = useState(false);
+  const [selectedTransaction, setSelectedTransaction] = useState<Transaction | null>(null);
 
   useEffect(() => {
     const loadData = async () => {
@@ -325,7 +328,7 @@ const RiwayatTransaksi = () => {
                           <Button
                             variant="ghost"
                             size="sm"
-                            onClick={() => toast.info("Detail Transaksi", { description: "Akan segera tersedia" })}
+                            onClick={() => { setSelectedTransaction(transaction); setOpenDetail(true); }}
                             className="mt-2 hover-scale"
                           >
                             <Eye className="w-4 h-4 mr-1" />
@@ -341,6 +344,55 @@ const RiwayatTransaksi = () => {
           </Card>
         </main>
       </div>
+
+      <Dialog open={openDetail} onOpenChange={setOpenDetail}>
+        <DialogContent className="max-w-lg w-full">
+          {selectedTransaction && (
+            <>
+              <DialogHeader>
+                <DialogTitle className="flex items-center gap-2">
+                  {getTypeIcon(selectedTransaction.type) && (
+                    <span className={`w-8 h-8 rounded-full flex items-center justify-center ${getTypeColor(selectedTransaction.type)}`}>
+                      {React.createElement(getTypeIcon(selectedTransaction.type), { className: 'w-5 h-5' })}
+                    </span>
+                  )}
+                  Detail Transaksi
+                </DialogTitle>
+              </DialogHeader>
+              <div className="space-y-3 mt-2">
+                <div className="flex items-center gap-2">
+                  <Badge className={getStatusColor(selectedTransaction.status)}>{getStatusText(selectedTransaction.status)}</Badge>
+                  <span className="text-xs text-gray-400">{formatDate(selectedTransaction.date)}</span>
+                </div>
+                <div className="text-lg font-semibold text-gray-800 mb-1">{selectedTransaction.description}</div>
+                {selectedTransaction.type === 'pickup' && (
+                  <>
+                    <div className="flex items-center gap-2 text-sm text-gray-600">
+                      <Truck className="w-4 h-4 text-blue-500" />
+                      <span>Jenis Sampah: {selectedTransaction.waste_type || '-'}</span>
+                      {selectedTransaction.weight && <span>• {selectedTransaction.weight} kg</span>}
+                    </div>
+                  </>
+                )}
+                {selectedTransaction.type === 'exchange' && selectedTransaction.reward_item && (
+                  <div className="flex items-center gap-2 text-sm text-gray-600">
+                    <Star className="w-4 h-4 text-purple-500" />
+                    <span>Reward: {selectedTransaction.reward_item}</span>
+                  </div>
+                )}
+                <div className="flex items-center gap-2 text-base font-bold mt-2">
+                  <span className={selectedTransaction.points > 0 ? 'text-green-600' : 'text-red-600'}>
+                    {selectedTransaction.points > 0 ? '+' : ''}{selectedTransaction.points.toLocaleString()} Poin
+                  </span>
+                </div>
+              </div>
+              <DialogClose asChild>
+                <Button className="mt-6 w-full btn-primary">Tutup</Button>
+              </DialogClose>
+            </>
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
