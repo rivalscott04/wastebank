@@ -7,7 +7,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { toast } from '@/hooks/use-toast';
 import AdminSidebar from '@/components/AdminSidebar';
 import SkeletonLoader from '@/components/SkeletonLoader';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogTrigger, DialogClose } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogTrigger, DialogClose, DialogDescription } from '@/components/ui/dialog';
 import { Package } from 'lucide-react';
 import ConfirmDialog from '@/components/ConfirmDialog';
 
@@ -173,6 +173,9 @@ const Settings = () => {
               <DialogContent>
                 <DialogHeader>
                   <DialogTitle>{isEdit ? 'Edit Harga Sampah' : 'Tambah Harga Sampah'}</DialogTitle>
+                  <DialogDescription>
+                    {isEdit ? 'Edit data harga sampah di bawah ini.' : 'Isi data harga sampah baru di bawah ini.'}
+                  </DialogDescription>
                 </DialogHeader>
                 <form onSubmit={handleSubmit} className="grid grid-cols-1 md:grid-cols-2 gap-4 items-end">
                   <div>

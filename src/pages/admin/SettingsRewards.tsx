@@ -6,7 +6,7 @@ import { toast } from '@/hooks/use-toast';
 import SkeletonLoader from '@/components/SkeletonLoader';
 import AdminSidebar from '@/components/AdminSidebar';
 import { Gift } from 'lucide-react';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogTrigger, DialogClose } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogTrigger, DialogClose, DialogDescription } from '@/components/ui/dialog';
 import ConfirmDialog from '@/components/ConfirmDialog';
 
 interface Reward {
@@ -151,6 +151,9 @@ const SettingsRewards = () => {
               <DialogContent>
                 <DialogHeader>
                   <DialogTitle>{isEdit ? 'Edit Reward' : 'Tambah Reward'}</DialogTitle>
+                  <DialogDescription>
+                    {isEdit ? 'Edit data reward di bawah ini.' : 'Isi data reward baru di bawah ini.'}
+                  </DialogDescription>
                 </DialogHeader>
                 <form onSubmit={handleSubmit} className="grid grid-cols-1 md:grid-cols-2 gap-4 items-end">
                   <Input name="name" value={form.name || ''} onChange={handleChange} placeholder="Nama Reward" required />
