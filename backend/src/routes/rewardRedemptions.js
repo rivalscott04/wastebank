@@ -1,8 +1,6 @@
 const express = require('express');
 const router = express.Router();
-const RewardRedemption = require('../models/RewardRedemption');
-const Reward = require('../models/Reward');
-const User = require('../models/User');
+const { RewardRedemption, Reward, User, WasteCategory } = require('../models');
 const auth = require('../middleware/auth');
 const { Op } = require('sequelize');
 

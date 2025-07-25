@@ -1,6 +1,6 @@
 const express = require('express');
 const router = express.Router();
-const Reward = require('../models/Reward');
+const { Reward } = require('../models');
 const auth = require('../middleware/auth');
 const { Op } = require('sequelize');
 

@@ -1,9 +1,7 @@
 const express = require('express');
 const router = express.Router();
-const WasteCollection = require('../models/WasteCollection');
-const WasteCollectionItem = require('../models/WasteCollectionItem');
+const { WasteCollection, WasteCollectionItem, User } = require('../models');
 const WasteCategory = require('../models/WasteCategory');
-const User = require('../models/User');
 const auth = require('../middleware/auth');
 
 // Get all waste collections (admin) or user's waste collections (nasabah)
@@ -131,6 +129,40 @@ router.patch('/:id/status', auth, async (req, res) => {
     });
 
     res.json(collection);
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: 'Server error' });
+  }
+});
+
+// Update status penjemputan
+router.patch('/:id/status', auth, async (req, res) => {
+  try {
+    // Optional: cek role admin
+    if (req.user.role !== 'admin') {
+      return res.status(403).json({ message: 'Access denied' });
+    }
+    const { status } = req.body;
+    const { id } = req.params;
+
+    // Validasi status (opsional)
+    const allowedStatus = ['pending', 'confirmed', 'processing', 'completed', 'cancelled', 'approved', 'disetujui', 'menunggu'];
+    if (!allowedStatus.includes(status)) {
+      return res.status(400).json({ message: 'Status tidak valid' });
+    }
+
+    // Update status di database
+    const { WasteCollection } = require('../models');
+    const [updated] = await WasteCollection.update(
+      { status },
+      { where: { id } }
+    );
+
+    if (updated) {
+      return res.json({ message: 'Status updated successfully' });
+    } else {
+      return res.status(404).json({ message: 'Data not found' });
+    }
   } catch (error) {
     console.error(error);
     res.status(500).json({ message: 'Server error' });

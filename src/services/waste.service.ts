@@ -19,5 +19,8 @@ export const wasteService = {
   },
   async deleteCategory(id: number) {
     return api.delete(`/waste-categories/${id}`).then(res => res.data);
+  },
+  async updatePickupStatus(id: number, status: string) {
+    return api.patch(`/waste-collections/${id}/status`, { status }).then(res => res.data);
   }
 }; 

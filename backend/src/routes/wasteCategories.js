@@ -1,6 +1,6 @@
 const express = require('express');
 const router = express.Router();
-const WasteCategory = require('../models/WasteCategory');
+const { WasteCategory } = require('../models');
 const auth = require('../middleware/auth');
 
 // Get all waste categories

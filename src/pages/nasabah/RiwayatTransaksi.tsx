@@ -67,7 +67,7 @@ const RiwayatTransaksi = () => {
           points: trx.total_points || trx.points || 0,
           status: trx.payment_status || trx.status || 'completed',
           waste_type: trx.items && trx.items.length > 0 ? trx.items.map((i:any)=>i.category?.name).join(', ') : undefined,
-          weight: trx.total_weight || undefined,
+          weight: trx.items && trx.items.length > 0 ? trx.items.reduce((sum: number, i: any) => sum + Number(i.estimated_weight || 0), 0) : undefined,
           reward_item: trx.reward_item || undefined
         }));
         setTransactions(data);
