@@ -13,7 +13,7 @@ router.get('/dashboard/activities', auth, async (req, res) => {
     // Ambil data terbaru dari masing-masing tabel
     const [users, transactions, collections, redemptions] = await Promise.all([
       User.findAll({ where: { role: 'nasabah' }, order: [['createdAt', 'DESC']], limit: 5 }),
-      Transaction.findAll({ order: [['createdAt', 'DESC']], limit: 5, include: [{ model: User, as: 'user' }] }),
+      Transaction.findAll({ order: [['createdAt', 'DESC']], limit: 5, include: [{ model: User, as: 'transactionUser' }] }),
       WasteCollection.findAll({ order: [['createdAt', 'DESC']], limit: 5, include: [{ model: User, as: 'user' }] }),
       RewardRedemption.findAll({ order: [['createdAt', 'DESC']], limit: 5, include: [{ model: User, as: 'user' }] })
     ]);
@@ -28,7 +28,7 @@ router.get('/dashboard/activities', auth, async (req, res) => {
       ...transactions.map(t => ({
         type: 'transaction',
         action: 'Transaksi sampah',
-        user: t.user?.name || '-',
+        user: t.transactionUser?.name || '-',
         time: t.createdAt,
       })),
       ...collections.map(c => ({

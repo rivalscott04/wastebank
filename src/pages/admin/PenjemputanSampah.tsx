@@ -9,7 +9,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Badge } from '@/components/ui/badge';
 import { toast } from '@/hooks/use-toast';
-import AdminSidebar from '@/components/AdminSidebar';
+import Sidebar from '@/components/Sidebar';
 import SkeletonLoader from '@/components/SkeletonLoader';
 import ConfirmDialog from '@/components/ConfirmDialog';
 import {
@@ -266,8 +266,8 @@ const PenjemputanSampah = () => {
   if (isLoading) {
     return (
       <div className="min-h-screen bg-gray-50 flex">
-        <AdminSidebar />
-        <div className="flex-1 lg:ml-0 p-4 lg:p-8 pt-16 lg:pt-8">
+        <Sidebar role="admin" />
+        <div className="flex-1 lg:ml-0 p-4 lg:p-8">
           <SkeletonLoader type="table" />
         </div>
       </div>
@@ -280,7 +280,7 @@ const PenjemputanSampah = () => {
 
   return (
     <div className="min-h-screen bg-gray-50 flex">
-      <AdminSidebar />
+      <Sidebar role="admin" />
 
       <div className="flex-1 lg:ml-0">
         <main className="p-4 lg:p-8">

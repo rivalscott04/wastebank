@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import NasabahSidebar from '@/components/NasabahSidebar';
+import Sidebar from '@/components/Sidebar';
 import SkeletonLoader from '@/components/SkeletonLoader';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -58,18 +58,36 @@ const RiwayatTransaksi = () => {
           return;
         }
         const res = await api.get('/transactions');
+        
+        console.log('Raw transaction data:', res.data);
+        
         // Mapping agar sesuai Transaction[]
-        const data = (res.data || res).map((trx: any) => ({
-          id: trx.id,
-          date: trx.createdAt || trx.date,
-          type: trx.type || (trx.items && trx.items.length > 0 ? 'pickup' : 'exchange'),
-          description: trx.notes || (trx.items && trx.items.length > 0 ? `Penjemputan Sampah ${trx.items.map((i:any)=>i.category?.name).join(', ')}` : 'Tukar Poin'),
-          points: trx.total_points || trx.points || 0,
-          status: trx.payment_status || trx.status || 'completed',
-          waste_type: trx.items && trx.items.length > 0 ? trx.items.map((i:any)=>i.category?.name).join(', ') : undefined,
-          weight: trx.items && trx.items.length > 0 ? trx.items.reduce((sum: number, i: any) => sum + Number(i.estimated_weight || 0), 0) : undefined,
-          reward_item: trx.reward_item || undefined
-        }));
+        const data = (res.data || res).map((trx: any) => {
+          console.log('Processing transaction:', trx.id);
+          console.log('Transaction items:', trx.items);
+          
+          const categories = trx.items && trx.items.length > 0 
+            ? trx.items.map((i:any) => ({
+                category_id: i.category_id,
+                category_name: i.transactionCategory?.name,
+                weight: i.weight
+              }))
+            : [];
+          
+          console.log('Categories for transaction', trx.id, ':', categories);
+          
+          return {
+            id: trx.id,
+            date: trx.createdAt || trx.date,
+            type: trx.type || (trx.items && trx.items.length > 0 ? 'pickup' : 'exchange'),
+            description: trx.notes || (trx.items && trx.items.length > 0 ? `Penjemputan Sampah ${categories.map(c => c.category_name).filter(Boolean).join(', ')}` : 'Tukar Poin'),
+            points: trx.total_points || trx.points || 0,
+            status: trx.payment_status || trx.status || 'completed',
+            waste_type: categories.length > 0 ? categories.map(c => c.category_name).filter(Boolean).join(', ') : undefined,
+            weight: trx.total_weight,
+            reward_item: trx.reward_item || undefined
+          };
+        });
         setTransactions(data);
       } catch (e) {
         toast.error('Gagal memuat riwayat transaksi');
@@ -145,10 +163,10 @@ const RiwayatTransaksi = () => {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-gray-50">
-        <NasabahSidebar />
-        <div className="lg:ml-64">
-          <main className="p-4 pt-16 lg:pt-8">
+      <div className="min-h-screen bg-gray-50 flex">
+        <Sidebar role="nasabah" />
+        <div className="flex-1 lg:ml-0">
+          <main className="p-4 lg:p-8">
             <SkeletonLoader type="riwayat" />
           </main>
         </div>
@@ -157,11 +175,11 @@ const RiwayatTransaksi = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <NasabahSidebar />
+    <div className="min-h-screen bg-gray-50 flex">
+      <Sidebar role="nasabah" />
 
-      <div className="lg:ml-64">
-        <main className="p-4 pt-16 lg:pt-8 space-y-6">
+      <div className="flex-1 lg:ml-0">
+        <main className="p-4 lg:p-8 space-y-6">
           {/* Header */}
           <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
             <div>

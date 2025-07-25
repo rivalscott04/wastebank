@@ -43,7 +43,7 @@ TransactionItem.init({
 });
 
 TransactionItem.associate = (models) => {
-  TransactionItem.belongsTo(models.WasteCategory, { foreignKey: 'category_id', as: 'category' });
+  // Associations are defined in models/index.js
 };
 
 module.exports = TransactionItem; 

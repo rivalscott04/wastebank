@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { toast } from '@/hooks/use-toast';
-import AdminSidebar from '@/components/AdminSidebar';
+import Sidebar from '@/components/Sidebar';
 import SkeletonLoader from '@/components/SkeletonLoader';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogTrigger, DialogClose, DialogDescription } from '@/components/ui/dialog';
 import { Package } from 'lucide-react';
@@ -156,7 +156,7 @@ const Settings = () => {
 
   return (
     <div className="min-h-screen bg-gray-50 flex">
-      <AdminSidebar />
+      <Sidebar role="admin" />
       <div className="flex-1 lg:ml-0 p-4 lg:p-8">
         <Card className="mb-8 shadow-lg border-0">
           <CardHeader className="flex flex-row items-center justify-between pb-2">

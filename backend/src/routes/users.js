@@ -123,4 +123,37 @@ router.patch('/:id/points', auth, async (req, res) => {
   }
 });
 
+// Change password
+router.patch('/:id/password', auth, async (req, res) => {
+  try {
+    if (req.user.role !== 'admin' && req.user.id !== parseInt(req.params.id)) {
+      return res.status(403).json({ message: 'Access denied' });
+    }
+
+    const user = await User.findByPk(req.params.id);
+    if (!user) {
+      return res.status(404).json({ message: 'User not found' });
+    }
+
+    const { currentPassword, newPassword } = req.body;
+
+    // Verify current password
+    const isMatch = await user.comparePassword(currentPassword);
+    if (!isMatch) {
+      return res.status(400).json({ message: 'Current password is incorrect' });
+    }
+
+    // Update password
+    user.password = newPassword;
+    await user.save();
+
+    res.json({
+      message: 'Password updated successfully'
+    });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: 'Server error' });
+  }
+});
+
 module.exports = router; 

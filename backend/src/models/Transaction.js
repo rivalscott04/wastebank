@@ -32,13 +32,18 @@ Transaction.init({
     type: DataTypes.INTEGER,
     allowNull: false
   },
+  total_weight: {
+    type: DataTypes.DECIMAL(10, 2),
+    allowNull: false
+  },
   payment_method: {
     type: DataTypes.ENUM('cash', 'bank_transfer', 'e-wallet'),
     allowNull: false
   },
   payment_status: {
     type: DataTypes.ENUM('pending', 'completed', 'cancelled'),
-    defaultValue: 'pending'
+    defaultValue: 'pending',
+    allowNull: false
   },
   notes: DataTypes.TEXT
 }, {
@@ -46,10 +51,6 @@ Transaction.init({
   modelName: 'Transaction'
 });
 
-Transaction.associate = (models) => {
-  Transaction.belongsTo(models.User, { foreignKey: 'user_id', as: 'user' });
-  Transaction.belongsTo(models.WasteCollection, { foreignKey: 'waste_collection_id', as: 'waste_collection' });
-  Transaction.hasMany(models.TransactionItem, { foreignKey: 'transaction_id', as: 'items' });
-};
+// Associations are defined in models/index.js
 
 module.exports = Transaction; 

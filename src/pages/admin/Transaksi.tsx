@@ -9,7 +9,6 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Badge } from '@/components/ui/badge';
 import { toast } from '@/hooks/use-toast';
-import AdminSidebar from '@/components/AdminSidebar';
 import SkeletonLoader from '@/components/SkeletonLoader';
 import ConfirmDialog from '@/components/ConfirmDialog';
 import {
@@ -25,6 +24,7 @@ import {
   TrendingUp
 } from 'lucide-react';
 import { transactionService } from '@/services/transaction.service';
+import Sidebar from '@/components/Sidebar';
 
 interface Transaction {
   id: string;
@@ -74,16 +74,17 @@ const Transaksi = () => {
       setUser(parsedUser);
       try {
         const apiData = await transactionService.getAllTransactions();
+        
         // Mapping data dari API ke struktur tabel
         const mapped = apiData.map((trx: any) => ({
           id: trx.id,
           user_id: trx.user_id,
-          user_name: trx.user?.name || '-',
+          user_name: trx.transactionUser?.name || '-',
           waste_id: trx.items?.[0]?.category_id || '-',
           waste_name: trx.items && trx.items.length > 0
-            ? trx.items.map((i: any) => i.category?.name).filter(Boolean).join(', ')
+            ? trx.items.map((i: any) => i.transactionCategory?.name).filter(Boolean).join(', ')
             : '-',
-          weight: trx.items?.reduce((sum: number, i: any) => sum + Number(i.weight || 0), 0),
+          weight: typeof trx.total_weight !== 'undefined' ? trx.total_weight : (trx.items?.reduce((sum: number, i: any) => sum + Number(i.weight || 0), 0)),
           total_price: trx.total_amount,
           total_points: trx.total_points,
           date: trx.createdAt,
@@ -195,17 +196,17 @@ const Transaksi = () => {
   // Stats calculation
   const stats = {
     total: transactions.length,
-    totalRevenue: transactions.reduce((sum, t) => sum + t.total_price, 0),
-    totalWeight: transactions.reduce((sum, t) => sum + t.weight, 0),
-    totalPoints: transactions.reduce((sum, t) => sum + t.total_points, 0),
-    avgTransaction: transactions.length > 0 ? transactions.reduce((sum, t) => sum + t.total_price, 0) / transactions.length : 0
+    totalRevenue: transactions.reduce((sum, t) => sum + (Number(t.total_price) || 0), 0),
+    totalWeight: transactions.reduce((sum, t) => sum + (Number(t.weight) || 0), 0),
+    totalPoints: transactions.reduce((sum, t) => sum + (Number(t.total_points) || 0), 0),
+    avgTransaction: transactions.length > 0 ? transactions.reduce((sum, t) => sum + (Number(t.total_price) || 0), 0) / transactions.length : 0
   };
 
   if (isLoading) {
     return (
       <div className="min-h-screen bg-gray-50 flex">
-        <AdminSidebar />
-        <div className="flex-1 lg:ml-0 p-4 lg:p-8 pt-16 lg:pt-8">
+        <Sidebar role="admin" />
+        <div className="flex-1 lg:ml-0 p-4 lg:p-8">
           <SkeletonLoader type="table" />
         </div>
       </div>
@@ -218,7 +219,7 @@ const Transaksi = () => {
 
   return (
     <div className="min-h-screen bg-gray-50 flex">
-      <AdminSidebar />
+      <Sidebar role="admin" />
 
       <div className="flex-1 lg:ml-0">
         <main className="p-4 lg:p-8">
@@ -267,7 +268,7 @@ const Transaksi = () => {
                 <div className="flex items-center justify-between">
                   <div>
                     <p className="text-sm font-medium text-gray-600 mb-1">Total Berat</p>
-                    <p className="text-2xl font-bold text-blue-600">{stats.totalWeight.toFixed(1)} Kg</p>
+                    <p className="text-2xl font-bold text-blue-600">{(Number(stats.totalWeight) || 0).toFixed(1)} Kg</p>
                   </div>
                   <div className="w-12 h-12 bg-gradient-to-r from-blue-100 to-blue-200 rounded-xl flex items-center justify-center">
                     <Weight className="w-6 h-6 text-blue-600" />
@@ -281,7 +282,7 @@ const Transaksi = () => {
                 <div className="flex items-center justify-between">
                   <div>
                     <p className="text-sm font-medium text-gray-600 mb-1">Total Poin</p>
-                    <p className="text-2xl font-bold text-purple-600">{stats.totalPoints.toLocaleString()}</p>
+                    <p className="text-2xl font-bold text-purple-600">{(Number(stats.totalPoints) || 0).toLocaleString()}</p>
                   </div>
                   <div className="w-12 h-12 bg-gradient-to-r from-purple-100 to-purple-200 rounded-xl flex items-center justify-center">
                     <Star className="w-6 h-6 text-purple-600" />

@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import NasabahSidebar from '@/components/NasabahSidebar';
+import Sidebar from '@/components/Sidebar';
 import SkeletonLoader from '@/components/SkeletonLoader';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -155,18 +155,24 @@ const RequestJemput = () => {
 
   const addWasteItem = () => {
     const newItem: WasteItem = {
-      id: Date.now().toString(),
+      id: Date.now().toString() + Math.random().toString(36).substr(2, 5),
       type: '',
       estimated_weight: 0,
       description: ''
     };
-    setWasteItems([...wasteItems, newItem]);
+    setWasteItems(prev => {
+      const updated = [...prev, newItem];
+      console.log('After add:', updated);
+      return updated;
+    });
   };
 
   const removeWasteItem = (id: string) => {
-    if (wasteItems.length > 1) {
-      setWasteItems(wasteItems.filter(item => item.id !== id));
-    }
+    setWasteItems(prev => {
+      const updated = prev.length > 1 ? prev.filter(item => item.id !== id) : prev;
+      console.log('After remove:', updated);
+      return updated;
+    });
   };
 
   const updateWasteItem = (id: string, field: keyof WasteItem, value: any) => {
@@ -211,7 +217,7 @@ const RequestJemput = () => {
   const confirmSubmit = async () => {
     setIsSubmitting(true);
     setShowConfirmDialog(false);
-
+    console.log('Waste items to submit:', wasteItems);
     try {
       await wasteService.createPickupRequest({
         pickup_address: useProfileAddress ? profileAddress : formData.address,
@@ -305,10 +311,10 @@ const RequestJemput = () => {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-gray-50">
-        <NasabahSidebar />
-        <div className="lg:ml-64">
-          <main className="p-4 pt-16 lg:pt-8">
+      <div className="min-h-screen bg-gray-50 flex">
+        <Sidebar role="nasabah" />
+        <div className="flex-1 lg:ml-0">
+          <main className="p-4 lg:p-8">
             <SkeletonLoader type="request-jemput" />
           </main>
         </div>
@@ -317,11 +323,11 @@ const RequestJemput = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <NasabahSidebar />
+    <div className="min-h-screen bg-gray-50 flex">
+      <Sidebar role="nasabah" />
 
-      <div className="lg:ml-64">
-        <main className="p-4 pt-16 lg:pt-8 space-y-6">
+      <div className="flex-1 lg:ml-0">
+        <main className="p-4 lg:p-8 space-y-6">
           {/* Header */}
           <div>
             <h1 className="text-2xl font-bold flex items-center gap-2 pl-12 lg:pl-0">

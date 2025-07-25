@@ -17,14 +17,13 @@ const AdminKategori = lazy(() => import("./pages/admin/Kategori"));
 const PenjemputanSampah = lazy(() => import("./pages/admin/PenjemputanSampah"));
 const Transaksi = lazy(() => import("./pages/admin/Transaksi"));
 const Settings = lazy(() => import("./pages/admin/Settings"));
-const SettingsRewards = lazy(() => import("./pages/admin/SettingsRewards"));
+
 
 // Nasabah pages - lazy loaded
 const NasabahDashboard = lazy(() => import("./pages/nasabah/Dashboard"));
 const ProfilNasabah = lazy(() => import("./pages/nasabah/Profil"));
 const RiwayatTransaksi = lazy(() => import("./pages/nasabah/RiwayatTransaksi"));
 const RequestJemput = lazy(() => import("./pages/nasabah/RequestJemput"));
-const TukarPoin = lazy(() => import("./pages/nasabah/TukarPoin"));
 
 // Error page - can be loaded immediately as it's small
 import NotFound from "./pages/NotFound";
@@ -88,11 +87,7 @@ const App = () => (
                 <Settings />
               </Suspense>
             } />
-            <Route path="/admin/settings/rewards" element={
-              <Suspense fallback={<LoadingFallback type="table" />}>
-                <SettingsRewards />
-              </Suspense>
-            } />
+
 
             {/* Nasabah Routes */}
             <Route path="/nasabah/dashboard" element={
@@ -115,11 +110,7 @@ const App = () => (
                 <RequestJemput />
               </Suspense>
             } />
-            <Route path="/nasabah/tukar-poin" element={
-              <Suspense fallback={<LoadingFallback type="tukar-poin" />}>
-                <TukarPoin />
-              </Suspense>
-            } />
+
 
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />

@@ -29,8 +29,8 @@ app.use('/api/users', require('./routes/users'));
 app.use('/api/waste-categories', require('./routes/wasteCategories'));
 app.use('/api/waste-collections', require('./routes/wasteCollections'));
 app.use('/api/transactions', require('./routes/transactions'));
-app.use('/api/rewards', require('./routes/rewards'));
-app.use('/api/reward-redemptions', require('./routes/rewardRedemptions'));
+
+
 
 // Tambahkan route dashboard/activities
 app.use('/api', require('./routes/index'));

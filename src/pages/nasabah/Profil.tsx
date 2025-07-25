@@ -7,7 +7,7 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Badge } from '@/components/ui/badge';
 import { toast } from '@/hooks/use-toast';
-import NasabahSidebar from '@/components/NasabahSidebar';
+import Sidebar from '@/components/Sidebar';
 import SkeletonLoader from '@/components/SkeletonLoader';
 import ConfirmDialog from '@/components/ConfirmDialog';
 import {
@@ -49,6 +49,13 @@ const ProfilNasabah = () => {
   const [isEditing, setIsEditing] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [showConfirmDialog, setShowConfirmDialog] = useState(false);
+  const [showPasswordDialog, setShowPasswordDialog] = useState(false);
+  const [passwordForm, setPasswordForm] = useState({
+    currentPassword: '',
+    newPassword: '',
+    confirmPassword: ''
+  });
+  const [isChangingPassword, setIsChangingPassword] = useState(false);
 
   const [profile, setProfile] = useState<UserProfile>({
     id: '',
@@ -150,7 +157,9 @@ const ProfilNasabah = () => {
       const res = await api.put(`/users/${profile.id}`, {
         name: editForm.name,
         phone: editForm.phone,
-        address: editForm.address
+        address: editForm.address,
+        date_of_birth: editForm.date_of_birth,
+        gender: editForm.gender
       });
       const updated = res.data.user;
       setProfile(prev => ({ ...prev, ...updated }));
@@ -160,6 +169,39 @@ const ProfilNasabah = () => {
       toast.error("Gagal memperbarui profil", { description: "Terjadi kesalahan saat menyimpan data" });
     } finally {
       setIsSaving(false);
+    }
+  };
+
+  const handleChangePassword = () => {
+    setShowPasswordDialog(true);
+  };
+
+  const confirmChangePassword = async () => {
+    if (passwordForm.newPassword !== passwordForm.confirmPassword) {
+      toast.error("Password tidak cocok", { description: "Password baru dan konfirmasi password harus sama" });
+      return;
+    }
+
+    if (passwordForm.newPassword.length < 6) {
+      toast.error("Password terlalu pendek", { description: "Password minimal 6 karakter" });
+      return;
+    }
+
+    setIsChangingPassword(true);
+    try {
+      await api.patch(`/users/${profile.id}/password`, {
+        currentPassword: passwordForm.currentPassword,
+        newPassword: passwordForm.newPassword
+      });
+      
+      setShowPasswordDialog(false);
+      setPasswordForm({ currentPassword: '', newPassword: '', confirmPassword: '' });
+      toast.success("Password berhasil diubah!", { description: "Password Anda telah diperbarui" });
+    } catch (error: any) {
+      const message = error.response?.data?.message || "Gagal mengubah password";
+      toast.error("Gagal mengubah password", { description: message });
+    } finally {
+      setIsChangingPassword(false);
     }
   };
 
@@ -184,7 +226,7 @@ const ProfilNasabah = () => {
   if (isLoading) {
     return (
       <div className="min-h-screen bg-gray-50 flex">
-        <NasabahSidebar />
+        <Sidebar role="nasabah" />
         <div className="flex-1 ml-0 lg:ml-64 p-8 pt-16 lg:pt-8">
           <SkeletonLoader type="profile" />
         </div>
@@ -198,10 +240,10 @@ const ProfilNasabah = () => {
 
   return (
     <div className="min-h-screen bg-gray-50 flex">
-      <NasabahSidebar />
+      <Sidebar role="nasabah" />
 
-      <div className="flex-1 ml-0 lg:ml-64">
-        <main className="p-4 pt-16 lg:p-8 lg:pt-8">
+      <div className="flex-1 lg:ml-0">
+        <main className="p-4 lg:p-8">
           {/* Header */}
           <div className="mb-8 animate-fade-in">
             <h1 className="text-2xl font-bold flex items-center gap-2 pl-12 lg:pl-0">
@@ -531,7 +573,7 @@ const ProfilNasabah = () => {
                     <Button
                       variant="outline"
                       className="w-full justify-start hover-scale"
-                      onClick={() => toast.info("Fitur Ubah Password", { description: "Akan segera tersedia" })}
+                      onClick={handleChangePassword}
                     >
                       <Shield className="w-4 h-4 mr-3 text-gray-600" />
                       Ubah Password
@@ -573,6 +615,78 @@ const ProfilNasabah = () => {
         cancelText="Batal"
         type="success"
       />
+
+      {/* Change Password Dialog */}
+      {showPasswordDialog && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg p-6 w-full max-w-md mx-4">
+            <h3 className="text-lg font-semibold mb-4">Ubah Password</h3>
+            <div className="space-y-4">
+              <div>
+                <Label htmlFor="currentPassword" className="block text-sm font-medium text-gray-700 mb-1">
+                  Password Saat Ini
+                </Label>
+                <Input
+                  id="currentPassword"
+                  type="password"
+                  value={passwordForm.currentPassword}
+                  onChange={(e) => setPasswordForm(prev => ({ ...prev, currentPassword: e.target.value }))}
+                  placeholder="Masukkan password saat ini"
+                  className="w-full"
+                  required
+                />
+              </div>
+              <div>
+                <Label htmlFor="newPassword" className="block text-sm font-medium text-gray-700 mb-1">
+                  Password Baru
+                </Label>
+                <Input
+                  id="newPassword"
+                  type="password"
+                  value={passwordForm.newPassword}
+                  onChange={(e) => setPasswordForm(prev => ({ ...prev, newPassword: e.target.value }))}
+                  placeholder="Masukkan password baru (min. 6 karakter)"
+                  className="w-full"
+                  required
+                />
+              </div>
+              <div>
+                <Label htmlFor="confirmPassword" className="block text-sm font-medium text-gray-700 mb-1">
+                  Konfirmasi Password Baru
+                </Label>
+                <Input
+                  id="confirmPassword"
+                  type="password"
+                  value={passwordForm.confirmPassword}
+                  onChange={(e) => setPasswordForm(prev => ({ ...prev, confirmPassword: e.target.value }))}
+                  placeholder="Konfirmasi password baru"
+                  className="w-full"
+                  required
+                />
+              </div>
+            </div>
+            <div className="flex justify-end space-x-3 mt-6">
+              <Button
+                variant="outline"
+                onClick={() => {
+                  setShowPasswordDialog(false);
+                  setPasswordForm({ currentPassword: '', newPassword: '', confirmPassword: '' });
+                }}
+                disabled={isChangingPassword}
+              >
+                Batal
+              </Button>
+              <Button
+                onClick={confirmChangePassword}
+                disabled={isChangingPassword}
+                className="bg-yellow-600 hover:bg-yellow-700"
+              >
+                {isChangingPassword ? "Mengubah..." : "Ubah Password"}
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

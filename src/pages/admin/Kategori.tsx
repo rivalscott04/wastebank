@@ -21,7 +21,7 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog';
 import { toast } from '@/hooks/use-toast';
-import AdminSidebar from '@/components/AdminSidebar';
+import Sidebar from '@/components/Sidebar';
 import SkeletonLoader from '@/components/SkeletonLoader';
 import ConfirmDialog from '@/components/ConfirmDialog';
 import { Package, Plus, Edit, Trash2, Tag, TrendingUp, Calendar } from 'lucide-react';
@@ -128,7 +128,7 @@ const AdminKategori = () => {
   if (isLoading) {
     return (
       <div className="min-h-screen bg-gray-50 flex">
-        <AdminSidebar />
+        <Sidebar role="admin" />
         <div className="flex-1 lg:ml-0 p-4 lg:p-8 pt-16 lg:pt-8">
           <SkeletonLoader type="table" />
         </div>
@@ -154,7 +154,7 @@ const AdminKategori = () => {
 
   return (
     <div className="min-h-screen bg-gray-50 flex">
-      <AdminSidebar />
+      <Sidebar role="admin" />
 
       <div className="flex-1 lg:ml-0">
         <main className="p-4 lg:p-8">

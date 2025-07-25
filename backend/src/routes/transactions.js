@@ -5,6 +5,10 @@ const auth = require('../middleware/auth');
 
 // Get all transactions (admin) or user's transactions (nasabah)
 router.get('/', auth, async (req, res) => {
+  
+    
+
+  
   try {
     let transactions;
     const include = [
@@ -13,25 +17,28 @@ router.get('/', auth, async (req, res) => {
         as: 'items',
         include: [{
           model: WasteCategory,
-          as: 'category'
+          as: 'transactionCategory'
         }]
       },
       {
         model: User,
-        as: 'user',
+        as: 'transactionUser',
         attributes: ['id', 'name', 'email', 'phone']
       },
       {
         model: WasteCollection,
-        as: 'collection'
+        as: 'waste_collection'
       }
     ];
 
     if (req.user.role === 'admin') {
-      transactions = await Transaction.findAll({ include });
+      transactions = await Transaction.findAll({
+        where: { payment_status: 'completed' },
+        include
+      });
     } else {
       transactions = await Transaction.findAll({
-        where: { user_id: req.user.id },
+        where: { user_id: req.user.id, payment_status: 'completed' },
         include
       });
     }
@@ -134,10 +141,10 @@ router.post('/', auth, async (req, res) => {
         {
           model: TransactionItem,
           as: 'items',
-          include: [{
-            model: WasteCategory,
-            as: 'category'
-          }]
+                  include: [{
+          model: WasteCategory,
+          as: 'transactionCategory'
+        }]
         }
       ]
     });

@@ -95,16 +95,19 @@ router.get('/me', auth, async (req, res) => {
     });
     if (!user) return res.status(404).json({ message: 'User not found' });
 
-    // Hitung total berat dan total transaksi user
+    // Hitung total berat, total transaksi, dan total points dari transaksi user
     const totalWaste = await Transaction.sum('total_weight', {
       where: { user_id: user.id, payment_status: ['paid', 'completed'] }
     });
     const totalTransactions = await Transaction.count({
       where: { user_id: user.id, payment_status: ['paid', 'completed'] }
     });
+    const totalPoints = await Transaction.sum('total_points', {
+      where: { user_id: user.id, payment_status: ['paid', 'completed'] }
+    });
 
-    // Hitung next rank points
-    const points = user.points || 0;
+    // Hitung next rank points berdasarkan total points dari transaksi
+    const points = Number(totalPoints) || 0;
     let rank = 'Bronze';
     let nextRankPoints = 1000 - points;
     if (points >= 10000) {

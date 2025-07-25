@@ -22,10 +22,10 @@ import {
   DialogTrigger,
 } from '@/components/ui/dialog';
 import { toast } from '@/hooks/use-toast';
-import AdminSidebar from '@/components/AdminSidebar';
 import SkeletonLoader from '@/components/SkeletonLoader';
 import ConfirmDialog from '@/components/ConfirmDialog';
 import { Users, Plus, Edit, Trash2, Mail, Phone, MapPin, Star, TrendingUp, UserCheck, Calendar } from 'lucide-react';
+import Sidebar from '@/components/Sidebar';
 
 interface Nasabah {
   id: number;
@@ -52,57 +52,56 @@ const AdminNasabah = () => {
   const [dialogMode, setDialogMode] = useState<'add' | 'edit'>('add');
   const [deleteNasabah, setDeleteNasabah] = useState<Nasabah | null>(null);
 
-  // Mock data untuk demo
-  const mockNasabah: Nasabah[] = [
-    {
-      id: 1,
-      name: 'Siti Nurhaliza',
-      email: 'siti@example.com',
-      phone: '081234567890',
-      address: 'Jl. Merdeka No. 123, Jakarta',
-      total_points: 1250,
-      created_at: '2024-01-15'
-    },
-    {
-      id: 2,
-      name: 'Budi Santoso',
-      email: 'budi@example.com',
-      phone: '081234567891',
-      address: 'Jl. Sudirman No. 456, Bandung',
-      total_points: 890,
-      created_at: '2024-02-10'
-    },
-    {
-      id: 3,
-      name: 'Ahmad Wijaya',
-      email: 'ahmad@example.com',
-      phone: '081234567892',
-      address: 'Jl. Gatot Subroto No. 789, Surabaya',
-      total_points: 2100,
-      created_at: '2024-03-05'
-    }
-  ];
+
 
   useEffect(() => {
-    // Check if user is logged in and is admin
-    const userData = localStorage.getItem('user');
-    if (!userData) {
-      navigate('/login');
-      return;
-    }
+    const loadData = async () => {
+      // Check if user is logged in and is admin
+      const userData = localStorage.getItem('user');
+      if (!userData) {
+        navigate('/login');
+        return;
+      }
 
-    const parsedUser = JSON.parse(userData);
-    if (parsedUser.role !== 'admin') {
-      toast.error("Akses Ditolak", {
-        description: "Anda tidak memiliki akses ke halaman admin",
-      });
-      navigate('/');
-      return;
-    }
+      const parsedUser = JSON.parse(userData);
+      if (parsedUser.role !== 'admin') {
+        toast.error("Akses Ditolak", {
+          description: "Anda tidak memiliki akses ke halaman admin",
+        });
+        navigate('/');
+        return;
+      }
 
-    // Simulate loading
-    setNasabahList(mockNasabah);
-    setIsLoading(false);
+      try {
+        // Fetch nasabah data from API
+        const response = await fetch('/api/users', {
+          headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
+        });
+        const data = await response.json();
+        
+        // Filter only nasabah users and map to Nasabah interface
+        const nasabahData = data
+          .filter((user: any) => user.role === 'nasabah')
+          .map((user: any) => ({
+            id: user.id,
+            name: user.name,
+            email: user.email,
+            phone: user.phone || '-',
+            address: user.address || '-',
+            total_points: user.points || 0,
+            created_at: new Date(user.createdAt).toISOString().split('T')[0]
+          }));
+        
+        setNasabahList(nasabahData);
+      } catch (error) {
+        console.error('Error loading nasabah data:', error);
+        toast.error('Gagal memuat data nasabah');
+      }
+      
+      setIsLoading(false);
+    };
+
+    loadData();
   }, [navigate]);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
@@ -181,8 +180,8 @@ const AdminNasabah = () => {
   if (isLoading) {
     return (
       <div className="min-h-screen bg-gray-50 flex">
-        <AdminSidebar />
-        <div className="flex-1 lg:ml-0 p-4 lg:p-8 pt-16 lg:pt-8">
+        <Sidebar role="admin" />
+        <div className="flex-1 lg:ml-0 p-4 lg:p-8">
           <SkeletonLoader type="table" />
         </div>
       </div>
@@ -203,7 +202,7 @@ const AdminNasabah = () => {
 
   return (
     <div className="min-h-screen bg-gray-50 flex">
-      <AdminSidebar />
+      <Sidebar role="admin" />
 
       <div className="flex-1 lg:ml-0">
         <main className="p-4 lg:p-8">

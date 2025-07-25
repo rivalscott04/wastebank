@@ -16,11 +16,11 @@ WasteCategory.init({
   description: DataTypes.TEXT,
   price_per_kg: {
     type: DataTypes.DECIMAL(10, 2),
-    allowNull: false
+    allowNull: true
   },
   points_per_kg: {
     type: DataTypes.INTEGER,
-    allowNull: false
+    allowNull: true
   }
 }, {
   sequelize,

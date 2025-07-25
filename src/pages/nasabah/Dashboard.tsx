@@ -5,13 +5,12 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
 import { toast } from '@/hooks/use-toast';
-import NasabahSidebar from '@/components/NasabahSidebar';
+import Sidebar from '@/components/Sidebar';
 import SkeletonLoader from '@/components/SkeletonLoader';
 import {
   User,
   Recycle,
   TrendingUp,
-  Gift,
   History,
   Truck,
   Award,
@@ -30,6 +29,9 @@ const NasabahDashboard = () => {
     nextRankPoints: 0
   });
   const [wasteTypes, setWasteTypes] = useState<any[]>([]);
+  const [recentTransactions, setRecentTransactions] = useState<any[]>([]);
+
+
 
   useEffect(() => {
     const loadData = async () => {
@@ -50,29 +52,57 @@ const NasabahDashboard = () => {
       }
       setUser(parsedUser);
       try {
-        const res = await fetch('/api/auth/me', {
+        // Fetch user data with stats from /api/auth/me
+        const userRes = await fetch('/api/auth/me', {
           headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
         });
-        const data = await res.json();
+        const userData = await userRes.json();
+        
+        // Set user stats from backend calculation
         setUserStats({
-          totalPoints: data.points || 0,
-          totalWaste: data.total_waste_collected || 0,
-          totalTransactions: data.total_transactions || 0,
-          rank: data.rank || '',
-          nextRankPoints: data.next_rank_points || 0
+          totalPoints: userData.points || 0,
+          totalWaste: userData.total_waste_collected || 0,
+          totalTransactions: userData.total_transactions || 0,
+          rank: userData.rank || 'Bronze',
+          nextRankPoints: userData.next_rank_points || 0
         });
+        
+        // Fetch transactions for recent transactions
+        const transactionsRes = await fetch('/api/transactions', {
+          headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
+        });
+        const transactions = await transactionsRes.json();
+        
         // Fetch waste prices
         const priceRes = await fetch('/api/waste-prices', {
           headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
         });
         const prices = await priceRes.json();
-        setWasteTypes(prices.map((p: any) => ({
-          name: p.category?.name || '-',
-          price: `Rp ${Number(p.price_per_kg).toLocaleString('id-ID')}/Kg`,
-          points: `${p.points_per_kg} poin/Kg`,
-          icon: p.icon || ''
+        
+        // Check if prices is an array
+        if (Array.isArray(prices)) {
+          setWasteTypes(prices.map((p: any) => ({
+            name: p.category?.name || '-',
+            price: `Rp ${Number(p.price_per_kg).toLocaleString('id-ID')}/Kg`,
+            points: `${p.points_per_kg} poin/Kg`,
+            icon: p.icon || ''
+          })));
+        } else {
+          console.error('Prices response is not an array:', prices);
+          setWasteTypes([]);
+        }
+        
+        // Set recent transactions from real data
+        setRecentTransactions(transactions.slice(0, 3).map((t: any) => ({
+          id: t.id,
+          date: new Date(t.createdAt).toLocaleDateString('id-ID'),
+          type: t.items && t.items.length > 0 ? t.items.map((i: any) => i.transactionCategory?.name).join(', ') : 'Sampah',
+          weight: `${t.total_weight} Kg`,
+          points: t.total_points,
+          status: t.payment_status
         })));
       } catch (e) {
+        console.error('Error loading dashboard data:', e);
         toast.error('Gagal memuat data dashboard');
       }
       setIsLoading(false);
@@ -80,32 +110,7 @@ const NasabahDashboard = () => {
     loadData();
   }, [navigate]);
 
-  const recentTransactions = [
-    {
-      id: 1,
-      date: "2024-01-15",
-      type: "Plastik PET",
-      weight: "2.5 Kg",
-      points: 75,
-      status: "completed"
-    },
-    {
-      id: 2,
-      date: "2024-01-12",
-      type: "Kertas Kardus",
-      weight: "5.0 Kg",
-      points: 100,
-      status: "completed"
-    },
-    {
-      id: 3,
-      date: "2024-01-10",
-      type: "Botol Kaca",
-      weight: "3.2 Kg",
-      points: 160,
-      status: "completed"
-    }
-  ];
+
 
   const achievements = [
     {
@@ -134,12 +139,12 @@ const NasabahDashboard = () => {
     }
   ];
 
-  const progressToNextRank = ((userStats.totalPoints % 1000) / 1000) * 100;
+  const progressToNextRank = userStats.nextRankPoints > 0 ? ((userStats.totalPoints % 1000) / 1000) * 100 : 100;
 
   if (isLoading) {
     return (
       <div className="min-h-screen bg-gray-50 flex">
-        <NasabahSidebar />
+        <Sidebar role="nasabah" />
         <div className="flex-1 ml-0 lg:ml-64 p-8 pt-16 lg:pt-8">
           <SkeletonLoader type="dashboard" />
         </div>
@@ -153,11 +158,11 @@ const NasabahDashboard = () => {
 
   return (
     <div className="min-h-screen bg-gray-50 flex">
-      <NasabahSidebar />
+      <Sidebar role="nasabah" />
 
-      <div className="flex-1 ml-0 lg:ml-64">
+      <div className="flex-1 lg:ml-0">
         {/* Main Content */}
-        <main className="p-4 pt-16 lg:p-8 lg:pt-8">
+        <main className="p-4 lg:p-8">
           {/* Welcome Section */}
           <div className="mb-8 animate-fade-in">
             <h1 className="text-2xl font-bold flex items-center gap-2 pl-12 lg:pl-0">
@@ -255,7 +260,7 @@ const NasabahDashboard = () => {
                     <Button
                       className="h-auto p-4 justify-start hover-scale"
                       variant="outline"
-                      onClick={() => toast.info("Fitur Request Jemput", { description: "Akan segera tersedia" })}
+                      onClick={() => navigate('/nasabah/request-jemput')}
                     >
                       <Truck className="w-5 h-5 mr-3 text-orange-600" />
                       <div className="text-left">
@@ -267,7 +272,7 @@ const NasabahDashboard = () => {
                     <Button
                       className="h-auto p-4 justify-start hover-scale"
                       variant="outline"
-                      onClick={() => toast.info("Fitur Riwayat Transaksi", { description: "Akan segera tersedia" })}
+                      onClick={() => navigate('/nasabah/riwayat-transaksi')}
                     >
                       <History className="w-5 h-5 mr-3 text-blue-600" />
                       <div className="text-left">
@@ -276,22 +281,12 @@ const NasabahDashboard = () => {
                       </div>
                     </Button>
 
-                    <Button
-                      className="h-auto p-4 justify-start hover-scale"
-                      variant="outline"
-                      onClick={() => toast.info("Fitur Tukar Poin", { description: "Akan segera tersedia" })}
-                    >
-                      <Gift className="w-5 h-5 mr-3 text-purple-600" />
-                      <div className="text-left">
-                        <div className="font-medium">Tukar Poin</div>
-                        <div className="text-sm text-gray-500">Gunakan poin untuk hadiah</div>
-                      </div>
-                    </Button>
+
 
                     <Button
                       className="h-auto p-4 justify-start hover-scale"
                       variant="outline"
-                      onClick={() => toast.info("Fitur Update Profil", { description: "Akan segera tersedia" })}
+                      onClick={() => navigate('/nasabah/profil')}
                     >
                       <User className="w-5 h-5 mr-3 text-green-600" />
                       <div className="text-left">

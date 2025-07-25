@@ -36,7 +36,7 @@ WastePrice.init({
 });
 
 WastePrice.associate = (models) => {
-  WastePrice.belongsTo(models.WasteCategory, { foreignKey: 'category_id', as: 'category' });
+  // Associations are defined in models/index.js
 };
 
 module.exports = WastePrice; 
