@@ -11,10 +11,10 @@ export const wasteService = {
   async getPickupRequests() {
     return api.get('/waste-collections');
   },
-  async createCategory(data: { name: string }) {
+  async createCategory(data: { name: string; price_per_kg?: number; points_per_kg?: number }) {
     return api.post('/waste-categories', data).then(res => res.data);
   },
-  async updateCategory(id: number, data: { name: string }) {
+  async updateCategory(id: number, data: { name: string; price_per_kg?: number; points_per_kg?: number }) {
     return api.put(`/waste-categories/${id}`, data).then(res => res.data);
   },
   async deleteCategory(id: number) {

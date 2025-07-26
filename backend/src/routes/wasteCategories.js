@@ -7,9 +7,25 @@ const auth = require('../middleware/auth');
 router.get('/', async (req, res) => {
   try {
     const categories = await WasteCategory.findAll({
-      attributes: ['id', 'name']
+      attributes: ['id', 'name', 'createdAt'],
+      include: [{
+        model: WastePrice,
+        as: 'wastePrice',
+        attributes: ['price_per_kg', 'points_per_kg'],
+        required: false
+      }]
     });
-    res.json(categories);
+    
+    // Transform data to include price and points directly
+    const transformedCategories = categories.map(category => ({
+      id: category.id,
+      name: category.name,
+      created_at: category.createdAt,
+      price_per_kg: category.wastePrice ? category.wastePrice.price_per_kg : null,
+      points_per_kg: category.wastePrice ? category.wastePrice.points_per_kg : null
+    }));
+    
+    res.json(transformedCategories);
   } catch (error) {
     console.error(error);
     res.status(500).json({ message: 'Server error' });
@@ -30,9 +46,7 @@ router.post('/', auth, async (req, res) => {
     
     const category = await WasteCategory.create({
       name,
-      description,
-      price_per_kg,
-      points_per_kg
+      description
     });
 
     console.log('Category created successfully:', category.toJSON());
@@ -92,10 +106,27 @@ router.put('/:id', auth, async (req, res) => {
     await category.update({
       name,
       description,
-      price_per_kg,
-      points_per_kg,
       is_active
     });
+
+    // Update or create waste price
+    if (price_per_kg !== undefined || points_per_kg !== undefined) {
+      const [wastePrice, created] = await WastePrice.findOrCreate({
+        where: { category_id: category.id },
+        defaults: {
+          price_per_kg: price_per_kg || 3000.00,
+          points_per_kg: points_per_kg || 3,
+          icon: '🗑️'
+        }
+      });
+
+      if (!created) {
+        await wastePrice.update({
+          price_per_kg: price_per_kg !== undefined ? price_per_kg : wastePrice.price_per_kg,
+          points_per_kg: points_per_kg !== undefined ? points_per_kg : wastePrice.points_per_kg
+        });
+      }
+    }
 
     res.json(category);
   } catch (error) {

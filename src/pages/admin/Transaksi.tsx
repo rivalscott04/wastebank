@@ -19,9 +19,9 @@ import {
   User,
   Calendar,
   Weight,
-  DollarSign,
   Star,
-  TrendingUp
+  TrendingUp,
+  Coins
 } from 'lucide-react';
 import { transactionService } from '@/services/transaction.service';
 import Sidebar from '@/components/Sidebar';
@@ -257,7 +257,7 @@ const Transaksi = () => {
                     <p className="text-2xl font-bold text-green-600">{formatCurrency(stats.totalRevenue)}</p>
                   </div>
                   <div className="w-12 h-12 bg-gradient-to-r from-green-100 to-green-200 rounded-xl flex items-center justify-center">
-                    <DollarSign className="w-6 h-6 text-green-600" />
+                    <Coins className="w-6 h-6 text-green-600" />
                   </div>
                 </div>
               </CardContent>
@@ -358,7 +358,7 @@ const Transaksi = () => {
                       </TableCell>
                       <TableCell className="text-gray-600">
                         <div className="flex items-center gap-2">
-                          <DollarSign className="w-4 h-4 text-gray-400" />
+                          <Coins className="w-4 h-4 text-gray-400" />
                           <span className="font-semibold text-green-600">
                             {formatCurrency(transaction.total_price)}
                           </span>
@@ -420,7 +420,7 @@ const Transaksi = () => {
                 <div className="flex flex-col gap-1 mt-2 text-sm">
                   <div className="flex items-center gap-2 text-gray-500 break-words"><Star className="w-4 h-4" /> {transaction.waste_name}</div>
                   <div className="flex items-center gap-2 text-gray-500 break-words"><Weight className="w-4 h-4" /> {transaction.weight} Kg</div>
-                  <div className="flex items-center gap-2 text-gray-500 break-words"><DollarSign className="w-4 h-4" /> {formatCurrency(transaction.total_price)}</div>
+                  <div className="flex items-center gap-2 text-gray-500 break-words"><Coins className="w-4 h-4" /> {formatCurrency(transaction.total_price)}</div>
                   <div className="flex items-center gap-2 text-gray-500 break-words"><Calendar className="w-4 h-4" /> {transaction.date && !isNaN(new Date(transaction.date).getTime()) ? new Date(transaction.date).toLocaleDateString('id-ID') : <span className="text-gray-400 italic">-</span>}</div>
                 </div>
                 <div className="flex gap-2 mt-3">

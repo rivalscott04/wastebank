@@ -2,6 +2,7 @@ const express = require('express');
 const router = express.Router();
 const { WasteCollection, WasteCollectionItem, User, Transaction, TransactionItem } = require('../models');
 const WasteCategory = require('../models/WasteCategory');
+const WastePrice = require('../models/WastePrice');
 const auth = require('../middleware/auth');
 
 console.log('=== WASTE COLLECTIONS ROUTES LOADED ===');
@@ -191,17 +192,30 @@ router.patch('/:id/status', auth, async (req, res) => {
         
         for (const item of collection.items) {
           
-          const category = await WasteCategory.findByPk(item.category_id);
-          if (!category) {
-            console.log('Category not found for ID:', item.category_id);
+          // Cari harga dari tabel WastePrices
+          const wastePrice = await WastePrice.findOne({
+            where: { category_id: item.category_id }
+          });
+          
+          if (!wastePrice) {
+            console.log('Waste price not found for category ID:', item.category_id);
             continue;
           }
           
-          const price_per_kg = Number(category.price_per_kg);
-          const points_per_kg = Number(category.points_per_kg);
+          const price_per_kg = Number(wastePrice.price_per_kg);
+          const points_per_kg = Number(wastePrice.points_per_kg);
           const weight = Number(item.estimated_weight);
           const subtotal = price_per_kg * weight;
           const points_earned = points_per_kg * weight;
+          
+          console.log('Item calculation:', {
+            category_id: item.category_id,
+            price_per_kg,
+            points_per_kg,
+            weight,
+            subtotal,
+            points_earned
+          });
           
           total_amount += subtotal;
           total_points += points_earned;

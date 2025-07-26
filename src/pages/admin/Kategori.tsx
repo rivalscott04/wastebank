@@ -31,6 +31,8 @@ interface Category {
   id: number;
   name: string;
   created_at: string;
+  price_per_kg?: number;
+  points_per_kg?: number;
 }
 
 const AdminKategori = () => {
@@ -39,7 +41,11 @@ const AdminKategori = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [selectedCategory, setSelectedCategory] = useState<Category | null>(null);
   const [deleteCategory, setDeleteCategory] = useState<Category | null>(null);
-  const [formData, setFormData] = useState({ name: '' });
+  const [formData, setFormData] = useState({ 
+    name: '', 
+    price_per_kg: '', 
+    points_per_kg: '' 
+  });
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [dialogMode, setDialogMode] = useState<'add' | 'edit'>('add');
 
@@ -71,14 +77,18 @@ const AdminKategori = () => {
 
   const openAddDialog = () => {
     setDialogMode('add');
-    setFormData({ name: '' });
+    setFormData({ name: '', price_per_kg: '', points_per_kg: '' });
     setIsDialogOpen(true);
   };
 
   const openEditDialog = (category: Category) => {
     setDialogMode('edit');
     setSelectedCategory(category);
-    setFormData({ name: category.name });
+    setFormData({ 
+      name: category.name, 
+      price_per_kg: category.price_per_kg ? category.price_per_kg.toString() : '', 
+      points_per_kg: category.points_per_kg ? category.points_per_kg.toString() : '' 
+    });
     setIsDialogOpen(true);
   };
 
@@ -89,11 +99,19 @@ const AdminKategori = () => {
       console.log('Submitting category data:', formData);
       
       if (dialogMode === 'add') {
-        const result = await wasteService.createCategory({ name: formData.name });
+        const result = await wasteService.createCategory({ 
+          name: formData.name,
+          price_per_kg: Number(formData.price_per_kg),
+          points_per_kg: Number(formData.points_per_kg)
+        });
         console.log('Category created:', result);
         toast.success('Kategori baru berhasil ditambahkan!');
       } else if (selectedCategory) {
-        const result = await wasteService.updateCategory(selectedCategory.id, { name: formData.name });
+        const result = await wasteService.updateCategory(selectedCategory.id, { 
+          name: formData.name,
+          price_per_kg: Number(formData.price_per_kg),
+          points_per_kg: Number(formData.points_per_kg)
+        });
         console.log('Category updated:', result);
         toast.success('Kategori berhasil diperbarui!');
       }
@@ -245,6 +263,8 @@ const AdminKategori = () => {
                   <TableRow className="bg-gray-50/50">
                     <TableHead className="font-semibold text-gray-700">ID</TableHead>
                     <TableHead className="font-semibold text-gray-700">Nama Kategori</TableHead>
+                    <TableHead className="font-semibold text-gray-700">Harga per Kg</TableHead>
+                    <TableHead className="font-semibold text-gray-700">Poin per Kg</TableHead>
                     <TableHead className="font-semibold text-gray-700">Tanggal Dibuat</TableHead>
                     <TableHead className="font-semibold text-gray-700">Aksi</TableHead>
                   </TableRow>
@@ -259,6 +279,20 @@ const AdminKategori = () => {
                             <Tag className="w-4 h-4 text-bank-green-600" />
                           </div>
                           {category.name}
+                        </div>
+                      </TableCell>
+                      <TableCell className="text-gray-600">
+                        <div className="flex items-center gap-2">
+                          <span className="font-medium text-green-600">
+                            Rp {category.price_per_kg ? category.price_per_kg.toLocaleString() : '0'}
+                          </span>
+                        </div>
+                      </TableCell>
+                      <TableCell className="text-gray-600">
+                        <div className="flex items-center gap-2">
+                          <span className="font-medium text-blue-600">
+                            {category.points_per_kg || '0'} poin
+                          </span>
                         </div>
                       </TableCell>
                       <TableCell className="text-gray-600">
@@ -310,7 +344,16 @@ const AdminKategori = () => {
                   </div>
                 </div>
                 <div className="flex flex-col gap-1 mt-2 text-sm">
-                  <div className="flex items-center gap-2 text-gray-500"><Calendar className="w-4 h-4" /> {category.created_at && !isNaN(new Date(category.created_at).getTime()) ? new Date(category.created_at).toLocaleDateString('id-ID') : <span className="text-gray-400 italic">-</span>}</div>
+                  <div className="flex items-center gap-2 text-gray-500">
+                    <span className="text-green-600 font-medium">Rp {category.price_per_kg ? category.price_per_kg.toLocaleString() : '0'}</span>
+                  </div>
+                  <div className="flex items-center gap-2 text-gray-500">
+                    <span className="text-blue-600 font-medium">{category.points_per_kg || '0'} poin</span>
+                  </div>
+                  <div className="flex items-center gap-2 text-gray-500">
+                    <Calendar className="w-4 h-4" /> 
+                    {category.created_at && !isNaN(new Date(category.created_at).getTime()) ? new Date(category.created_at).toLocaleDateString('id-ID') : <span className="text-gray-400 italic">-</span>}
+                  </div>
                 </div>
                 <div className="flex gap-2 mt-3">
                   <Button type="button" size="sm" variant="outline" className="border-bank-green-200 text-bank-green-700 hover:bg-bank-green-100 hover:text-bank-green-900 flex flex-row items-center gap-1 flex-1" onClick={() => openEditDialog(category)}><Edit className="mr-1 w-4 h-4" /> Edit</Button>
@@ -331,8 +374,8 @@ const AdminKategori = () => {
                 </DialogTitle>
                 <DialogDescription>
                   {dialogMode === 'add'
-                    ? 'Masukkan nama kategori sampah baru'
-                    : 'Perbarui nama kategori sampah'}
+                    ? 'Masukkan nama kategori sampah baru beserta harga dan poin'
+                    : 'Perbarui nama kategori sampah beserta harga dan poin'}
                 </DialogDescription>
               </DialogHeader>
 
@@ -343,10 +386,40 @@ const AdminKategori = () => {
                     id="name"
                     name="name"
                     value={formData.name}
-                    onChange={(e) => setFormData({ name: e.target.value })}
+                    onChange={(e) => setFormData(prev => ({ ...prev, name: e.target.value }))}
                     placeholder="Masukkan nama kategori"
                     required
                   />
+                </div>
+                
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="price_per_kg">Harga per Kg (Rp)</Label>
+                    <Input
+                      id="price_per_kg"
+                      name="price_per_kg"
+                      type="number"
+                      min="0"
+                      value={formData.price_per_kg}
+                      onChange={(e) => setFormData(prev => ({ ...prev, price_per_kg: e.target.value }))}
+                      placeholder="3000"
+                      required
+                    />
+                  </div>
+                  
+                  <div className="space-y-2">
+                    <Label htmlFor="points_per_kg">Poin per Kg</Label>
+                    <Input
+                      id="points_per_kg"
+                      name="points_per_kg"
+                      type="number"
+                      min="0"
+                      value={formData.points_per_kg}
+                      onChange={(e) => setFormData(prev => ({ ...prev, points_per_kg: e.target.value }))}
+                      placeholder="3"
+                      required
+                    />
+                  </div>
                 </div>
 
                 <DialogFooter>

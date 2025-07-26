@@ -15,8 +15,7 @@ import {
   Package,
   Truck,
   BarChart3,
-  Activity,
-  Settings
+  Activity
 } from 'lucide-react';
 import { userService } from '@/services/user.service';
 import { transactionService } from '@/services/transaction.service';
@@ -145,13 +144,7 @@ const AdminDashboard = () => {
       color: "bg-orange-500 hover:bg-orange-600",
       action: () => navigate('/admin/penjemputan')
     },
-    {
-      title: "Pengaturan Harga",
-      description: "Atur harga dan poin sampah",
-      icon: Settings,
-      color: "bg-indigo-500 hover:bg-indigo-600",
-      action: () => navigate('/admin/settings')
-    }
+
   ];
 
   if (isLoading) {
