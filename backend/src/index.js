@@ -8,7 +8,7 @@ const app = express();
 
 // Middleware
 app.use(cors({
-  origin: 'http://localhost:8080',
+  origin: 'https://bs.fmplgilitrawangan.com',
   credentials: true
 }));
 app.use(express.json());
