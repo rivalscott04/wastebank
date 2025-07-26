@@ -23,8 +23,8 @@ module.exports = {
       id: { allowNull: false, autoIncrement: true, primaryKey: true, type: Sequelize.INTEGER },
       name: { type: Sequelize.STRING, allowNull: false },
       description: Sequelize.TEXT,
-      price_per_kg: { type: Sequelize.DECIMAL(10, 2), allowNull: false },
-      points_per_kg: { type: Sequelize.INTEGER, allowNull: false },
+      price_per_kg: { type: Sequelize.DECIMAL(10, 2), allowNull: true },
+      points_per_kg: { type: Sequelize.INTEGER, allowNull: true },
       createdAt: { allowNull: false, type: Sequelize.DATE },
       updatedAt: { allowNull: false, type: Sequelize.DATE }
     });
@@ -63,7 +63,7 @@ module.exports = {
       total_weight: { type: Sequelize.DECIMAL(10, 2), allowNull: false },
       total_points: { type: Sequelize.INTEGER, allowNull: false },
       payment_method: Sequelize.STRING,
-      payment_status: { type: Sequelize.ENUM('pending', 'paid', 'cancelled'), defaultValue: 'pending' },
+      payment_status: { type: Sequelize.ENUM('pending', 'completed', 'cancelled'), defaultValue: 'pending', allowNull: false },
       notes: Sequelize.TEXT,
       createdAt: { allowNull: false, type: Sequelize.DATE },
       updatedAt: { allowNull: false, type: Sequelize.DATE }
@@ -82,31 +82,6 @@ module.exports = {
       updatedAt: { allowNull: false, type: Sequelize.DATE }
     });
 
-    // Rewards table
-    await queryInterface.createTable('Rewards', {
-      id: { allowNull: false, autoIncrement: true, primaryKey: true, type: Sequelize.INTEGER },
-      name: { type: Sequelize.STRING, allowNull: false },
-      description: Sequelize.TEXT,
-      points_required: { type: Sequelize.INTEGER, allowNull: false },
-      stock: { type: Sequelize.INTEGER, allowNull: false },
-      image: Sequelize.STRING,
-      expiry_date: Sequelize.DATE,
-      is_active: { type: Sequelize.BOOLEAN, defaultValue: true },
-      createdAt: { allowNull: false, type: Sequelize.DATE },
-      updatedAt: { allowNull: false, type: Sequelize.DATE }
-    });
-
-    // RewardRedemptions table
-    await queryInterface.createTable('RewardRedemptions', {
-      id: { allowNull: false, autoIncrement: true, primaryKey: true, type: Sequelize.INTEGER },
-      user_id: { type: Sequelize.INTEGER, references: { model: 'Users', key: 'id' }, onUpdate: 'CASCADE', onDelete: 'CASCADE' },
-      reward_id: { type: Sequelize.INTEGER, references: { model: 'Rewards', key: 'id' }, onUpdate: 'CASCADE', onDelete: 'RESTRICT' },
-      points_spent: { type: Sequelize.INTEGER, allowNull: false },
-      status: { type: Sequelize.ENUM('pending', 'approved', 'rejected', 'completed', 'cancelled'), defaultValue: 'pending' },
-      createdAt: { allowNull: false, type: Sequelize.DATE },
-      updatedAt: { allowNull: false, type: Sequelize.DATE }
-    });
-
     // WastePrices table
     await queryInterface.createTable('WastePrices', {
       id: { allowNull: false, autoIncrement: true, primaryKey: true, type: Sequelize.INTEGER },
@@ -120,8 +95,6 @@ module.exports = {
   },
   async down(queryInterface, Sequelize) {
     await queryInterface.dropTable('WastePrices');
-    await queryInterface.dropTable('RewardRedemptions');
-    await queryInterface.dropTable('Rewards');
     await queryInterface.dropTable('TransactionItems');
     await queryInterface.dropTable('Transactions');
     await queryInterface.dropTable('WasteCollectionItems');

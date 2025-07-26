@@ -127,7 +127,6 @@ dist
 .pnp.*
 
 # Vite
-dist/
 dist-ssr/
 *.local
 

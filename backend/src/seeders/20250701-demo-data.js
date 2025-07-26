@@ -98,16 +98,6 @@ module.exports = {
       { transaction_id: 1, category_id: 2, weight: 2.0, price_per_kg: 1500, points_earned: 2, subtotal: 3000, createdAt: new Date(), updatedAt: new Date() }
     ]);
 
-    // Rewards
-    await queryInterface.bulkInsert('Rewards', [
-      { name: 'Voucher Belanja', description: 'Voucher belanja senilai 10.000', points_required: 1000, stock: 10, image: '', expiry_date: null, is_active: true, createdAt: new Date(), updatedAt: new Date() }
-    ]);
-
-    // RewardRedemptions
-    await queryInterface.bulkInsert('RewardRedemptions', [
-      { user_id: 2, reward_id: 1, points_spent: 1000, status: 'pending', createdAt: new Date(), updatedAt: new Date() }
-    ]);
-
     // WastePrices
     await queryInterface.bulkInsert('WastePrices', [
       { category_id: 1, price_per_kg: 3000, points_per_kg: 30, icon: '🥤', createdAt: new Date(), updatedAt: new Date() }, // Plastik PET
@@ -117,8 +107,6 @@ module.exports = {
     ]);
   },
   async down(queryInterface, Sequelize) {
-    await queryInterface.bulkDelete('RewardRedemptions', null, {});
-    await queryInterface.bulkDelete('Rewards', null, {});
     await queryInterface.bulkDelete('TransactionItems', null, {});
     await queryInterface.bulkDelete('Transactions', null, {});
     await queryInterface.bulkDelete('WasteCollectionItems', null, {});
