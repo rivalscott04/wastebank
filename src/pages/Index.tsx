@@ -340,7 +340,7 @@ const Index = () => {
               </CardHeader>
               <CardContent>
                 <p className="text-gray-600 mb-2">Hubungi kami langsung</p>
-                <p className="font-semibold text-bank-green-600">+62 812 3456 7890</p>
+                <p className="font-semibold text-bank-green-600">+62 812-3456-7890</p>
               </CardContent>
             </Card>
 
@@ -353,7 +353,7 @@ const Index = () => {
               </CardHeader>
               <CardContent>
                 <p className="text-gray-600 mb-2">Kirim email ke kami</p>
-                <p className="font-semibold text-bank-blue-600">info@banksampah.digital</p>
+                <p className="font-semibold text-bank-blue-600">fmplgilitrawangan@gmail.com</p>
               </CardContent>
             </Card>
 
@@ -366,7 +366,7 @@ const Index = () => {
               </CardHeader>
               <CardContent>
                 <p className="text-gray-600 mb-2">Kunjungi kantor kami</p>
-                <p className="font-semibold text-purple-600">Jakarta, Indonesia</p>
+                <p className="font-semibold text-purple-600">Gili Trawangan, Lombok Utara, NTB</p>
               </CardContent>
             </Card>
           </div>
@@ -412,15 +412,15 @@ const Index = () => {
             <div>
               <h3 className="font-semibold mb-4">Kontak</h3>
               <div className="space-y-2 text-gray-400">
-                <p>+62 812 3456 7890</p>
-                <p>info@banksampah.digital</p>
-                <p>Jakarta, Indonesia</p>
+                <p>+62 812-3456-7890</p>
+                <p>fmplgilitrawangan@gmail.com</p>
+                <p>Gili Trawangan, Lombok Utara, NTB</p>
               </div>
             </div>
           </div>
           
           <div className="border-t border-gray-700 mt-8 pt-8 text-center text-gray-400">
-            <p>&copy; 2024 Bank Sampah Digital. All rights reserved.</p>
+            <p>&copy; 2025 Bank Sampah Digital. All rights reserved.</p>
           </div>
         </div>
       </footer>
