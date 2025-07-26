@@ -13,15 +13,7 @@ WasteCategory.init({
     type: DataTypes.STRING,
     allowNull: false
   },
-  description: DataTypes.TEXT,
-  price_per_kg: {
-    type: DataTypes.DECIMAL(10, 2),
-    allowNull: true
-  },
-  points_per_kg: {
-    type: DataTypes.INTEGER,
-    allowNull: true
-  }
+  description: DataTypes.TEXT
 }, {
   sequelize,
   modelName: 'WasteCategory'

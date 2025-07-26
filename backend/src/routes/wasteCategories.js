@@ -8,12 +8,12 @@ router.get('/', async (req, res) => {
   try {
     const categories = await WasteCategory.findAll({
       attributes: ['id', 'name', 'createdAt'],
-      include: [{
-        model: WastePrice,
-        as: 'wastePrice',
-        attributes: ['price_per_kg', 'points_per_kg'],
-        required: false
-      }]
+              include: [{
+          model: WastePrice,
+          as: 'prices',
+          attributes: ['price_per_kg', 'points_per_kg'],
+          required: false
+        }]
     });
     
     // Transform data to include price and points directly
@@ -21,8 +21,8 @@ router.get('/', async (req, res) => {
       id: category.id,
       name: category.name,
       created_at: category.createdAt,
-      price_per_kg: category.wastePrice ? category.wastePrice.price_per_kg : null,
-      points_per_kg: category.wastePrice ? category.wastePrice.points_per_kg : null
+      price_per_kg: category.prices && category.prices.length > 0 ? category.prices[0].price_per_kg : null,
+      points_per_kg: category.prices && category.prices.length > 0 ? category.prices[0].points_per_kg : null
     }));
     
     res.json(transformedCategories);
