@@ -37,21 +37,14 @@ const Login = () => {
         password: formData.password
       });
 
-      console.log('Login response:', response);
-
       // Simpan token dan user data ke localStorage
       localStorage.setItem('token', response.token);
       localStorage.setItem('user', JSON.stringify(response.user));
-
-      console.log('Token saved:', localStorage.getItem('token'));
-      console.log('User saved:', localStorage.getItem('user'));
 
       toast({
         title: "Login berhasil!",
         description: `Selamat datang, ${response.user.name}!`,
       });
-
-      console.log('Redirecting to:', response.user.role === 'admin' ? '/admin/dashboard' : '/nasabah/dashboard');
 
       // Redirect berdasarkan role dengan delay kecil
       setTimeout(() => {

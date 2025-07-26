@@ -92,7 +92,6 @@ const AdminNasabah = () => {
         
         setNasabahList(nasabahData);
       } catch (error) {
-        console.error('Error loading nasabah data:', error);
         toast.error('Gagal memuat data nasabah');
       }
       

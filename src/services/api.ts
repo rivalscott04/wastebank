@@ -23,9 +23,7 @@ api.interceptors.request.use((config) => {
 api.interceptors.response.use(
   (response) => response,
   (error) => {
-    console.log('API Error:', error.response?.status, error.response?.data);
     if (error.response?.status === 401) {
-      console.log('401 Unauthorized, redirecting to login');
       localStorage.removeItem('token');
       localStorage.removeItem('user');
       window.location.href = '/login';

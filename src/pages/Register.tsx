@@ -91,7 +91,6 @@ const Register = () => {
 
       navigate('/login');
     } catch (error: any) {
-      console.error('Register error:', error);
       toast({
         title: "Registrasi gagal!",
         description: error.response?.data?.message || "Terjadi kesalahan saat registrasi",

@@ -59,13 +59,8 @@ const RiwayatTransaksi = () => {
         }
         const res = await api.get('/transactions');
         
-        console.log('Raw transaction data:', res.data);
-        
         // Mapping agar sesuai Transaction[]
         const data = (res.data || res).map((trx: any) => {
-          console.log('Processing transaction:', trx.id);
-          console.log('Transaction items:', trx.items);
-          
           const categories = trx.items && trx.items.length > 0 
             ? trx.items.map((i:any) => ({
                 category_id: i.category_id,
@@ -73,8 +68,6 @@ const RiwayatTransaksi = () => {
                 weight: i.weight
               }))
             : [];
-          
-          console.log('Categories for transaction', trx.id, ':', categories);
           
           return {
             id: trx.id,

@@ -82,7 +82,6 @@ const NasabahDashboard = () => {
             icon: p.icon || ''
           })));
         } else {
-          console.error('Prices response is not an array:', prices);
           setWasteTypes([]);
         }
         
@@ -96,7 +95,6 @@ const NasabahDashboard = () => {
           status: t.payment_status
         })));
       } catch (e) {
-        console.error('Error loading dashboard data:', e);
         toast.error('Gagal memuat data dashboard');
       }
       setIsLoading(false);

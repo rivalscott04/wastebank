@@ -41,26 +41,21 @@ const AdminDashboard = () => {
       try {
         // Check if user is logged in and is admin
         const userData = localStorage.getItem('user');
-        console.log('User data from localStorage:', userData);
         
         if (!userData) {
-          console.log('No user data found, redirecting to login');
           navigate('/login');
           return;
         }
         
         const parsedUser = JSON.parse(userData);
-        console.log('Parsed user:', parsedUser);
         
         if (parsedUser.role !== 'admin') {
-          console.log('User is not admin, redirecting to home');
           toast.error('Akses Ditolak', { description: 'Anda tidak memiliki akses ke halaman admin' });
           navigate('/');
           return;
         }
         
         setUser(parsedUser);
-        console.log('User is admin, fetching dashboard data...');
         
         // Fetch data
         const [users, transactions, totalWeightData] = await Promise.all([
@@ -68,8 +63,6 @@ const AdminDashboard = () => {
           transactionService.getAllTransactions(),
           dashboardService.getTotalWeight()
         ]);
-        
-        console.log('Dashboard data fetched:', { users: users.length, transactions: transactions.length, totalWeight: totalWeightData });
         
         setStats({
           totalUsers: users.length,
@@ -80,7 +73,6 @@ const AdminDashboard = () => {
         
         // Fetch aktivitas terbaru - skip untuk sementara karena ada error
         // const activitiesData = await dashboardService.getActivities();
-        // console.log('Activities data:', activitiesData);
         // setActivities(activitiesData);
         setActivities([]); // Set empty array untuk sementara
         
