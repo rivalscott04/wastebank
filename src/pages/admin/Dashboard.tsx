@@ -5,6 +5,7 @@ import { Badge } from '@/components/ui/badge';
 import { toast } from '@/hooks/use-toast';
 import Sidebar from '@/components/Sidebar';
 import SkeletonLoader from '@/components/SkeletonLoader';
+import { dashboardService } from '@/services/dashboard.service';
 import {
   Users,
   Recycle,
@@ -14,7 +15,8 @@ import {
   Package,
   Truck,
   BarChart3,
-  Activity
+  Activity,
+  Settings
 } from 'lucide-react';
 import { userService } from '@/services/user.service';
 import { transactionService } from '@/services/transaction.service';
@@ -39,41 +41,49 @@ const AdminDashboard = () => {
       try {
         // Check if user is logged in and is admin
         const userData = localStorage.getItem('user');
+        console.log('User data from localStorage:', userData);
+        
         if (!userData) {
+          console.log('No user data found, redirecting to login');
           navigate('/login');
           return;
         }
+        
         const parsedUser = JSON.parse(userData);
+        console.log('Parsed user:', parsedUser);
+        
         if (parsedUser.role !== 'admin') {
+          console.log('User is not admin, redirecting to home');
           toast.error('Akses Ditolak', { description: 'Anda tidak memiliki akses ke halaman admin' });
           navigate('/');
           return;
         }
+        
         setUser(parsedUser);
+        console.log('User is admin, fetching dashboard data...');
+        
         // Fetch data
-        const [users, transactions, totalWeightRes] = await Promise.all([
+        const [users, transactions, totalWeightData] = await Promise.all([
           userService.getAllUsers(),
           transactionService.getAllTransactions(),
-          fetch('/api/dashboard/total-weight', {
-            headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
-          }).then(res => res.json())
+          dashboardService.getTotalWeight()
         ]);
+        
+        console.log('Dashboard data fetched:', { users: users.length, transactions: transactions.length, totalWeight: totalWeightData });
+        
         setStats({
           totalUsers: users.length,
-          totalWeight: totalWeightRes.totalWeight || 0,
+          totalWeight: totalWeightData.totalWeight || 0,
           totalTransactions: transactions.length,
           totalPoints: transactions.reduce((sum, t) => sum + Number(t.total_points || 0), 0)
         });
-        // Fetch aktivitas terbaru
-        const res = await fetch('/api/dashboard/activities', {
-          headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
-        });
-        if (res.ok) {
-          const data = await res.json();
-          setActivities(data);
-        } else {
-          setActivities([]);
-        }
+        
+        // Fetch aktivitas terbaru - skip untuk sementara karena ada error
+        // const activitiesData = await dashboardService.getActivities();
+        // console.log('Activities data:', activitiesData);
+        // setActivities(activitiesData);
+        setActivities([]); // Set empty array untuk sementara
+        
       } catch (e) {
         console.error('Dashboard error:', e);
         setError('Gagal memuat data dashboard');
@@ -120,28 +130,35 @@ const AdminDashboard = () => {
       description: "Tambah, edit, atau hapus data nasabah",
       icon: UserPlus,
       color: "bg-blue-500 hover:bg-blue-600",
-      action: () => toast.info("Fitur Kelola Nasabah", { description: "Akan segera tersedia" })
+      action: () => navigate('/admin/nasabah')
     },
     {
       title: "Kelola Kategori",
       description: "Atur kategori dan jenis sampah",
       icon: Package,
       color: "bg-green-500 hover:bg-green-600",
-      action: () => toast.info("Fitur Kelola Kategori", { description: "Akan segera tersedia" })
+      action: () => navigate('/admin/kategori')
     },
     {
       title: "Kelola Transaksi",
       description: "Monitor dan kelola transaksi",
       icon: ShoppingCart,
       color: "bg-purple-500 hover:bg-purple-600",
-      action: () => toast.info("Fitur Kelola Transaksi", { description: "Akan segera tersedia" })
+      action: () => navigate('/admin/transaksi')
     },
     {
       title: "Kelola Jemput Sampah",
       description: "Atur permintaan jemput sampah",
       icon: Truck,
       color: "bg-orange-500 hover:bg-orange-600",
-      action: () => toast.info("Fitur Kelola Jemput", { description: "Akan segera tersedia" })
+      action: () => navigate('/admin/penjemputan')
+    },
+    {
+      title: "Pengaturan Harga",
+      description: "Atur harga dan poin sampah",
+      icon: Settings,
+      color: "bg-indigo-500 hover:bg-indigo-600",
+      action: () => navigate('/admin/settings')
     }
   ];
 

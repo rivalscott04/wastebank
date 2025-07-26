@@ -1,6 +1,6 @@
 const express = require('express');
 const router = express.Router();
-const { WasteCategory } = require('../models');
+const { WasteCategory, WastePrice } = require('../models');
 const auth = require('../middleware/auth');
 
 // Get all waste categories
@@ -23,7 +23,11 @@ router.post('/', auth, async (req, res) => {
       return res.status(403).json({ message: 'Access denied' });
     }
 
+    console.log('Create category request body:', req.body);
     const { name, description, price_per_kg, points_per_kg } = req.body;
+    
+    console.log('Extracted data:', { name, description, price_per_kg, points_per_kg });
+    
     const category = await WasteCategory.create({
       name,
       description,
@@ -31,9 +35,43 @@ router.post('/', auth, async (req, res) => {
       points_per_kg
     });
 
+    console.log('Category created successfully:', category.toJSON());
+    
+    // Auto-create default waste price entry
+    try {
+      // Auto-determine icon based on category name
+      const getIconForCategory = (categoryName) => {
+        const name = categoryName.toLowerCase();
+        if (name.includes('plastik') || name.includes('pet')) return '🥤';
+        if (name.includes('kertas') || name.includes('kardus')) return '📦';
+        if (name.includes('kaca') || name.includes('botol')) return '🍾';
+        if (name.includes('aluminium') || name.includes('kaleng')) return '🥫';
+        if (name.includes('dapur') || name.includes('organik')) return '🍽️';
+        if (name.includes('elektronik') || name.includes('e-waste')) return '📱';
+        if (name.includes('logam') || name.includes('besi')) return '🔧';
+        if (name.includes('tekstil') || name.includes('kain')) return '👕';
+        if (name.includes('kayu') || name.includes('furniture')) return '🪑';
+        if (name.includes('karet') || name.includes('ban')) return '🛞';
+        return '🗑️'; // Default icon
+      };
+
+      const autoIcon = getIconForCategory(category.name);
+      
+      await WastePrice.create({
+        category_id: category.id,
+        price_per_kg: price_per_kg || 3000.00, // Use provided price or default
+        points_per_kg: points_per_kg || 3,     // Use provided points or default
+        icon: autoIcon
+      });
+      console.log(`Default waste price created for new category with icon: ${autoIcon}`);
+    } catch (priceError) {
+      console.error('Failed to create default waste price:', priceError);
+      // Don't fail the whole request if price creation fails
+    }
+    
     res.status(201).json(category);
   } catch (error) {
-    console.error(error);
+    console.error('Error creating category:', error);
     res.status(500).json({ message: 'Server error' });
   }
 });

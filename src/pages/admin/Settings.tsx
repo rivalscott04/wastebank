@@ -7,6 +7,9 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { toast } from '@/hooks/use-toast';
 import Sidebar from '@/components/Sidebar';
 import SkeletonLoader from '@/components/SkeletonLoader';
+import { wasteService } from '@/services/waste.service';
+import { wastePriceService } from '@/services/wastePrice.service';
+import api from '@/services/api';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogTrigger, DialogClose, DialogDescription } from '@/components/ui/dialog';
 import { Package } from 'lucide-react';
 import ConfirmDialog from '@/components/ConfirmDialog';
@@ -45,12 +48,8 @@ const Settings = () => {
     setIsLoading(true);
     try {
       const [catRes, priceRes] = await Promise.all([
-        fetch('/api/waste-categories', {
-          headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
-        }).then(r => r.json()),
-        fetch('/api/waste-prices', {
-          headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
-        }).then(r => r.json())
+        wasteService.getCategories(),
+        wastePriceService.getWastePrices()
       ]);
       setCategories(catRes);
       setWastePrices(priceRes);
@@ -116,11 +115,7 @@ const Settings = () => {
 
   const handleDelete = async (id: number) => {
     try {
-      const res = await fetch(`/api/waste-prices/${id}`, {
-        method: 'DELETE',
-        headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
-      });
-      if (!res.ok) throw new Error('Gagal menghapus');
+      await api.delete(`/waste-prices/${id}`);
       toast.success('Harga berhasil dihapus');
       fetchData();
     } catch (e) {
@@ -201,7 +196,40 @@ const Settings = () => {
                   </div>
                   <div>
                     <label className="block mb-1 font-medium">Icon (emoji)</label>
-                    <Input name="icon" value={form.icon} onChange={handleChange} placeholder="Contoh: 🥤" disabled={isEdit} />
+                    <div className="flex items-center gap-2">
+                      <Input 
+                        name="icon" 
+                        value={form.icon} 
+                        onChange={handleChange} 
+                        placeholder="Contoh: 🥤" 
+                        disabled={isEdit}
+                        className="flex-1"
+                      />
+                      <div className="text-2xl">{form.icon || '🗑️'}</div>
+                    </div>
+                    {!isEdit && (
+                      <>
+                        <div className="text-xs text-gray-500 mt-1">
+                          Klik icon di bawah untuk pilih cepat:
+                        </div>
+                        <div className="flex flex-wrap gap-2 mt-2">
+                          {['🥤', '📦', '🍾', '🥫', '🍽️', '📱', '🔧', '👕', '🪑', '🛞', '🗑️'].map((icon) => (
+                            <button
+                              key={icon}
+                              type="button"
+                              onClick={() => setForm(f => ({ ...f, icon }))}
+                              className={`text-2xl p-2 rounded-lg border-2 transition-all hover:scale-110 ${
+                                form.icon === icon 
+                                  ? 'border-bank-green-500 bg-bank-green-50' 
+                                  : 'border-gray-200 hover:border-gray-300'
+                              }`}
+                            >
+                              {icon}
+                            </button>
+                          ))}
+                        </div>
+                      </>
+                    )}
                   </div>
                   <div className="col-span-full flex gap-2 justify-end mt-2">
                     <Button type="submit" className="btn-primary">{isEdit ? 'Update' : 'Tambah'}</Button>

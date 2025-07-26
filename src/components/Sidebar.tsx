@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { NavLink, useNavigate, useLocation } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { toast } from '@/hooks/use-toast';
+import { authService } from '@/services/auth.service';
 import {
   Users,
   Package,
@@ -66,14 +67,8 @@ const Sidebar = ({ role }: SidebarProps) => {
     if (role === 'nasabah') {
       const fetchUserPoints = async () => {
         try {
-          const token = localStorage.getItem('token');
-          if (token) {
-            const response = await fetch('/api/auth/me', {
-              headers: { Authorization: `Bearer ${token}` }
-            });
-            const data = await response.json();
-            setUserPoints(data.points || 0);
-          }
+          const data = await authService.getCurrentUser();
+          setUserPoints(data.points || 0);
         } catch (error) {
           console.error('Error fetching user points:', error);
         }

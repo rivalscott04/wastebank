@@ -37,17 +37,30 @@ const Login = () => {
         password: formData.password
       });
 
+      console.log('Login response:', response);
+
+      // Simpan token dan user data ke localStorage
+      localStorage.setItem('token', response.token);
+      localStorage.setItem('user', JSON.stringify(response.user));
+
+      console.log('Token saved:', localStorage.getItem('token'));
+      console.log('User saved:', localStorage.getItem('user'));
+
       toast({
         title: "Login berhasil!",
         description: `Selamat datang, ${response.user.name}!`,
       });
 
-      // Redirect berdasarkan role
-      if (response.user.role === 'admin') {
-        navigate('/admin/dashboard');
-      } else {
-        navigate('/nasabah/dashboard');
-      }
+      console.log('Redirecting to:', response.user.role === 'admin' ? '/admin/dashboard' : '/nasabah/dashboard');
+
+      // Redirect berdasarkan role dengan delay kecil
+      setTimeout(() => {
+        if (response.user.role === 'admin') {
+          navigate('/admin/dashboard');
+        } else {
+          navigate('/nasabah/dashboard');
+        }
+      }, 100);
     } catch (error: any) {
       console.error('Login error:', error);
       toast({
@@ -180,9 +193,27 @@ const Login = () => {
 
             {/* Demo Credentials */}
             <div className="text-xs text-gray-500 bg-gray-50 p-3 rounded-lg">
-              <p className="font-medium mb-1">Demo Credentials:</p>
-              <p>Admin: admin@wastebank.com / admin123</p>
-              <p>Nasabah: budi@example.com / password</p>
+              <p className="font-medium mb-1 text-gray-700">🧪 Demo Credentials (Password: password123):</p>
+              <div className="space-y-2 mt-2">
+                <div className="border-l-2 border-blue-500 pl-2">
+                  <p className="font-medium text-blue-700">👨‍💼 Admin Panel</p>
+                  <p>admin@wastebank.com</p>
+                  <p className="text-xs text-gray-400">• Kelola nasabah, kategori, transaksi</p>
+                  <p className="text-xs text-gray-400">• Update status penjemputan</p>
+                </div>
+                <div className="border-l-2 border-green-500 pl-2">
+                  <p className="font-medium text-green-700">👩 Nasabah 1 (Siti Rahayu)</p>
+                  <p>siti@example.com</p>
+                  <p className="text-xs text-gray-400">• 268 poin, 1 transaksi selesai</p>
+                  <p className="text-xs text-gray-400">• Ada riwayat penjemputan (completed)</p>
+                </div>
+                <div className="border-l-2 border-orange-500 pl-2">
+                  <p className="font-medium text-orange-700">👨 Nasabah 2 (Budi Santoso)</p>
+                  <p>budi@example.com</p>
+                  <p className="text-xs text-gray-400">• 0 poin, belum ada transaksi</p>
+                  <p className="text-xs text-gray-400">• Siap untuk testing request jemput baru</p>
+                </div>
+              </div>
             </div>
           </CardContent>
         </Card>

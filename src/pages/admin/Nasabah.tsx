@@ -26,6 +26,7 @@ import SkeletonLoader from '@/components/SkeletonLoader';
 import ConfirmDialog from '@/components/ConfirmDialog';
 import { Users, Plus, Edit, Trash2, Mail, Phone, MapPin, Star, TrendingUp, UserCheck, Calendar } from 'lucide-react';
 import Sidebar from '@/components/Sidebar';
+import { userService } from '@/services/user.service';
 
 interface Nasabah {
   id: number;
@@ -74,10 +75,7 @@ const AdminNasabah = () => {
 
       try {
         // Fetch nasabah data from API
-        const response = await fetch('/api/users', {
-          headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
-        });
-        const data = await response.json();
+        const data = await userService.getAllUsers();
         
         // Filter only nasabah users and map to Nasabah interface
         const nasabahData = data
@@ -300,7 +298,7 @@ const AdminNasabah = () => {
                     <TableHead className="font-semibold text-gray-700">Nama</TableHead>
                     <TableHead className="font-semibold text-gray-700">Email</TableHead>
                     <TableHead className="font-semibold text-gray-700">Telepon</TableHead>
-                    <TableHead className="font-semibold text-gray-700">Alamat</TableHead>
+                    <TableHead className="font-semibold text-gray-700 w-64">Alamat</TableHead>
                     <TableHead className="font-semibold text-gray-700">Total Poin</TableHead>
                     <TableHead className="font-semibold text-gray-700">Bergabung</TableHead>
                     <TableHead className="font-semibold text-gray-700">Aksi</TableHead>
@@ -331,10 +329,12 @@ const AdminNasabah = () => {
                           {nasabah.phone}
                         </div>
                       </TableCell>
-                      <TableCell className="text-gray-600 max-w-xs truncate" title={nasabah.address}>
-                        <div className="flex items-center gap-2">
-                          <MapPin className="w-4 h-4 text-gray-400" />
-                          {nasabah.address}
+                      <TableCell className="text-gray-600 max-w-xs">
+                        <div className="flex items-start gap-2">
+                          <MapPin className="w-4 h-4 text-gray-400 mt-0.5 flex-shrink-0" />
+                          <div className="break-words leading-relaxed">
+                            {nasabah.address}
+                          </div>
                         </div>
                       </TableCell>
                       <TableCell>

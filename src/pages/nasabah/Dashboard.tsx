@@ -7,6 +7,9 @@ import { Progress } from '@/components/ui/progress';
 import { toast } from '@/hooks/use-toast';
 import Sidebar from '@/components/Sidebar';
 import SkeletonLoader from '@/components/SkeletonLoader';
+import { authService } from '@/services/auth.service';
+import { transactionService } from '@/services/transaction.service';
+import { wastePriceService } from '@/services/wastePrice.service';
 import {
   User,
   Recycle,
@@ -53,10 +56,7 @@ const NasabahDashboard = () => {
       setUser(parsedUser);
       try {
         // Fetch user data with stats from /api/auth/me
-        const userRes = await fetch('/api/auth/me', {
-          headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
-        });
-        const userData = await userRes.json();
+        const userData = await authService.getCurrentUser();
         
         // Set user stats from backend calculation
         setUserStats({
@@ -68,16 +68,10 @@ const NasabahDashboard = () => {
         });
         
         // Fetch transactions for recent transactions
-        const transactionsRes = await fetch('/api/transactions', {
-          headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
-        });
-        const transactions = await transactionsRes.json();
+        const transactions = await transactionService.getAllTransactions();
         
         // Fetch waste prices
-        const priceRes = await fetch('/api/waste-prices', {
-          headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
-        });
-        const prices = await priceRes.json();
+        const prices = await wastePriceService.getWastePrices();
         
         // Check if prices is an array
         if (Array.isArray(prices)) {

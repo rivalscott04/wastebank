@@ -104,7 +104,7 @@ const Register = () => {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-bank-green-50 to-bank-blue-50 flex items-center justify-center p-4">
-      <div className="w-full max-w-md">
+      <div className="w-full max-w-4xl">
         {/* Back Button */}
         <Button
           variant="ghost"
@@ -129,123 +129,149 @@ const Register = () => {
           </CardHeader>
 
           <CardContent className="space-y-6">
-            <form onSubmit={handleSubmit} className="space-y-4">
-              {/* Name Field */}
-              <div className="space-y-2">
-                <Label htmlFor="name" className="text-sm font-medium text-gray-700">
-                  Nama Lengkap *
-                </Label>
-                <Input
-                  id="name"
-                  name="name"
-                  type="text"
-                  placeholder="Masukkan nama lengkap"
-                  value={formData.name}
-                  onChange={handleInputChange}
-                  className="w-full transition-all duration-200 focus:ring-2 focus:ring-bank-green-500"
-                  required
-                />
-              </div>
+            <form onSubmit={handleSubmit} className="space-y-6">
+              {/* Personal Information - Left Column */}
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                <div className="space-y-4">
+                  <h3 className="text-lg font-semibold text-gray-800 border-b border-gray-200 pb-2">
+                    📋 Informasi Pribadi
+                  </h3>
+                  
+                  {/* Name Field */}
+                  <div className="space-y-2">
+                    <Label htmlFor="name" className="text-sm font-medium text-gray-700">
+                      Nama Lengkap *
+                    </Label>
+                    <Input
+                      id="name"
+                      name="name"
+                      type="text"
+                      placeholder="Masukkan nama lengkap"
+                      value={formData.name}
+                      onChange={handleInputChange}
+                      className="w-full transition-all duration-200 focus:ring-2 focus:ring-bank-green-500"
+                      required
+                    />
+                  </div>
 
-              {/* Email Field */}
-              <div className="space-y-2">
-                <Label htmlFor="email" className="text-sm font-medium text-gray-700">
-                  Email *
-                </Label>
-                <Input
-                  id="email"
-                  name="email"
-                  type="email"
-                  placeholder="masukkan@email.com"
-                  value={formData.email}
-                  onChange={handleInputChange}
-                  className="w-full transition-all duration-200 focus:ring-2 focus:ring-bank-green-500"
-                  required
-                />
-              </div>
+                  {/* Email Field */}
+                  <div className="space-y-2">
+                    <Label htmlFor="email" className="text-sm font-medium text-gray-700">
+                      Email *
+                    </Label>
+                    <Input
+                      id="email"
+                      name="email"
+                      type="email"
+                      placeholder="masukkan@email.com"
+                      value={formData.email}
+                      onChange={handleInputChange}
+                      className="w-full transition-all duration-200 focus:ring-2 focus:ring-bank-green-500"
+                      required
+                    />
+                  </div>
 
-              {/* Phone Field */}
-              <div className="space-y-2">
-                <Label htmlFor="phone" className="text-sm font-medium text-gray-700">
-                  No. Telepon *
-                </Label>
-                <Input
-                  id="phone"
-                  name="phone"
-                  type="tel"
-                  placeholder="08XXXXXXXXXX"
-                  value={formData.phone}
-                  onChange={handleInputChange}
-                  className="w-full transition-all duration-200 focus:ring-2 focus:ring-bank-green-500"
-                  required
-                />
-              </div>
+                  {/* Phone Field */}
+                  <div className="space-y-2">
+                    <Label htmlFor="phone" className="text-sm font-medium text-gray-700">
+                      No. Telepon *
+                    </Label>
+                    <Input
+                      id="phone"
+                      name="phone"
+                      type="tel"
+                      placeholder="08XXXXXXXXXX"
+                      value={formData.phone}
+                      onChange={handleInputChange}
+                      className="w-full transition-all duration-200 focus:ring-2 focus:ring-bank-green-500"
+                      required
+                    />
+                  </div>
 
-              {/* Address Field */}
-              <div className="space-y-2">
-                <Label htmlFor="address" className="text-sm font-medium text-gray-700">
-                  Alamat *
-                </Label>
-                <textarea
-                  id="address"
-                  name="address"
-                  placeholder="Masukkan alamat lengkap"
-                  value={formData.address}
-                  onChange={handleInputChange}
-                  className="w-full px-3 py-2 border border-input bg-background text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 min-h-[80px] rounded-md transition-all duration-200 focus:ring-2 focus:ring-bank-green-500"
-                  required
-                />
-              </div>
-
-              {/* Password Field */}
-              <div className="space-y-2">
-                <Label htmlFor="password" className="text-sm font-medium text-gray-700">
-                  Password *
-                </Label>
-                <div className="relative">
-                  <Input
-                    id="password"
-                    name="password"
-                    type={showPassword ? 'text' : 'password'}
-                    placeholder="Minimal 6 karakter"
-                    value={formData.password}
-                    onChange={handleInputChange}
-                    className="w-full pr-10 transition-all duration-200 focus:ring-2 focus:ring-bank-green-500"
-                    required
-                  />
-                  <button
-                    type="button"
-                    onClick={() => setShowPassword(!showPassword)}
-                    className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500 hover:text-gray-700"
-                  >
-                    {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-                  </button>
+                  {/* Address Field */}
+                  <div className="space-y-2">
+                    <Label htmlFor="address" className="text-sm font-medium text-gray-700">
+                      Alamat *
+                    </Label>
+                    <textarea
+                      id="address"
+                      name="address"
+                      placeholder="Masukkan alamat lengkap"
+                      value={formData.address}
+                      onChange={handleInputChange}
+                      className="w-full px-3 py-2 border border-input bg-background text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 min-h-[80px] rounded-md transition-all duration-200 focus:ring-2 focus:ring-bank-green-500"
+                      required
+                    />
+                  </div>
                 </div>
-              </div>
 
-              {/* Confirm Password Field */}
-              <div className="space-y-2">
-                <Label htmlFor="confirmPassword" className="text-sm font-medium text-gray-700">
-                  Konfirmasi Password *
-                </Label>
-                <div className="relative">
-                  <Input
-                    id="confirmPassword"
-                    name="confirmPassword"
-                    type={showConfirmPassword ? 'text' : 'password'}
-                    placeholder="Ulangi password"
-                    value={formData.confirmPassword}
-                    onChange={handleInputChange}
-                    className="w-full pr-10 transition-all duration-200 focus:ring-2 focus:ring-bank-green-500"
-                    required
-                  />
-                  <button
-                    type="button"
-                    onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                    className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500 hover:text-gray-700"
-                  >
-                    {showConfirmPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-                  </button>
+                {/* Account Security - Right Column */}
+                <div className="space-y-4">
+                  <h3 className="text-lg font-semibold text-gray-800 border-b border-gray-200 pb-2">
+                    🔐 Keamanan Akun
+                  </h3>
+                  
+                  {/* Password Field */}
+                  <div className="space-y-2">
+                    <Label htmlFor="password" className="text-sm font-medium text-gray-700">
+                      Password *
+                    </Label>
+                    <div className="relative">
+                      <Input
+                        id="password"
+                        name="password"
+                        type={showPassword ? 'text' : 'password'}
+                        placeholder="Minimal 6 karakter"
+                        value={formData.password}
+                        onChange={handleInputChange}
+                        className="w-full pr-10 transition-all duration-200 focus:ring-2 focus:ring-bank-green-500"
+                        required
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setShowPassword(!showPassword)}
+                        className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500 hover:text-gray-700"
+                      >
+                        {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* Confirm Password Field */}
+                  <div className="space-y-2">
+                    <Label htmlFor="confirmPassword" className="text-sm font-medium text-gray-700">
+                      Konfirmasi Password *
+                    </Label>
+                    <div className="relative">
+                      <Input
+                        id="confirmPassword"
+                        name="confirmPassword"
+                        type={showConfirmPassword ? 'text' : 'password'}
+                        placeholder="Ulangi password"
+                        value={formData.confirmPassword}
+                        onChange={handleInputChange}
+                        className="w-full pr-10 transition-all duration-200 focus:ring-2 focus:ring-bank-green-500"
+                        required
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                        className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500 hover:text-gray-700"
+                      >
+                        {showConfirmPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* Password Requirements */}
+                  <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
+                    <h4 className="text-sm font-medium text-blue-800 mb-2">📝 Persyaratan Password:</h4>
+                    <ul className="text-xs text-blue-700 space-y-1">
+                      <li>• Minimal 6 karakter</li>
+                      <li>• Kombinasi huruf dan angka</li>
+                      <li>• Hindari password yang mudah ditebak</li>
+                    </ul>
+                  </div>
                 </div>
               </div>
 

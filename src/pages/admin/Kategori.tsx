@@ -86,11 +86,15 @@ const AdminKategori = () => {
     e.preventDefault();
     setIsLoading(true);
     try {
+      console.log('Submitting category data:', formData);
+      
       if (dialogMode === 'add') {
-        await wasteService.createCategory({ name: formData.name });
+        const result = await wasteService.createCategory({ name: formData.name });
+        console.log('Category created:', result);
         toast.success('Kategori baru berhasil ditambahkan!');
       } else if (selectedCategory) {
-        await wasteService.updateCategory(selectedCategory.id, { name: formData.name });
+        const result = await wasteService.updateCategory(selectedCategory.id, { name: formData.name });
+        console.log('Category updated:', result);
         toast.success('Kategori berhasil diperbarui!');
       }
       // Refresh data
@@ -98,8 +102,10 @@ const AdminKategori = () => {
       setCategories(data);
       setIsDialogOpen(false);
       setSelectedCategory(null);
-    } catch (e) {
-      toast.error('Gagal menyimpan kategori');
+    } catch (e: any) {
+      console.error('Error submitting category:', e);
+      console.error('Error response:', e.response?.data);
+      toast.error(`Gagal menyimpan kategori: ${e.response?.data?.message || e.message}`);
     }
     setIsLoading(false);
   };
