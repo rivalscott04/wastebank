@@ -180,15 +180,53 @@ const RequestJemput = () => {
     ));
   };
 
+  // Fungsi untuk membersihkan item kosong
+  const cleanEmptyItems = () => {
+    setWasteItems(prev => {
+      // Hapus item yang benar-benar kosong (tidak ada type dan weight = 0)
+      const cleaned = prev.filter(item => 
+        !(item.type === '' && item.estimated_weight === 0 && item.description === '')
+      );
+      
+      // Pastikan selalu ada minimal 1 item
+      if (cleaned.length === 0) {
+        return [{ id: '1', type: '', estimated_weight: 0, description: '' }];
+      }
+      
+      return cleaned;
+    });
+  };
+
   const validateForm = () => {
     if (!formData.date || !formData.time_slot || !formData.address || !formData.phone) {
       toast.error("Form Tidak Lengkap", { description: "Mohon lengkapi semua field yang wajib diisi" });
       return false;
     }
 
+    // Debug: Log semua items untuk validasi
+    console.log('=== VALIDATION DEBUG ===');
+    console.log('All waste items:', wasteItems);
+    
+    // Filter hanya item yang valid (ada type dan weight > 0)
     const validWasteItems = wasteItems.filter(item =>
       item.type && item.estimated_weight > 0
     );
+    
+    console.log('Valid items:', validWasteItems);
+
+    // Cek item yang tidak lengkap
+    const incompleteItems = wasteItems.filter(item =>
+      (item.type && !item.estimated_weight) || (!item.type && item.estimated_weight > 0)
+    );
+    
+    console.log('Incomplete items:', incompleteItems);
+
+    if (incompleteItems.length > 0) {
+      toast.error("Data Sampah Tidak Lengkap", { 
+        description: "Mohon lengkapi jenis sampah dan perkiraan berat untuk semua item" 
+      });
+      return false;
+    }
 
     if (validWasteItems.length === 0) {
       toast.error("Sampah Tidak Valid", { description: "Minimal harus ada 1 jenis sampah dengan berat > 0" });
@@ -205,10 +243,12 @@ const RequestJemput = () => {
       return false;
     }
 
+    console.log('=== VALIDATION PASSED ===');
     return true;
   };
 
   const handleSubmit = () => {
+    // Validasi langsung tanpa cleanup dulu
     if (!validateForm()) return;
     setShowConfirmDialog(true);
   };
@@ -216,19 +256,35 @@ const RequestJemput = () => {
   const confirmSubmit = async () => {
     setIsSubmitting(true);
     setShowConfirmDialog(false);
+    
     console.log('Waste items to submit:', wasteItems);
+    
+    // Debug: Log sebelum filter
+    const beforeFilter = wasteItems.map(item => ({
+      id: item.id,
+      type: item.type,
+      weight: item.estimated_weight,
+      isValid: item.type && item.estimated_weight > 0
+    }));
+    console.log('Before filter:', beforeFilter);
+    
+    // Filter dan map items (langsung dari state saat ini)
+    const filteredItems = wasteItems
+      .filter(item => item.type && item.estimated_weight > 0)
+      .map(item => ({
+        category_id: Number(item.type),
+        estimated_weight: item.estimated_weight
+      }));
+    
+    console.log('After filter:', filteredItems);
+    
     try {
       await wasteService.createPickupRequest({
         pickup_address: useProfileAddress ? profileAddress : formData.address,
         pickup_date: formData.date,
         pickup_time_slot: formData.time_slot,
         notes: formData.notes,
-        items: wasteItems
-          .filter(item => item.type && item.estimated_weight > 0)
-          .map(item => ({
-            category_id: Number(item.type),
-            estimated_weight: item.estimated_weight
-          }))
+        items: filteredItems
       });
       toast.success("Request Berhasil Dikirim!", {
         description: "Permintaan penjemputan Anda telah diterima dan sedang diproses"
@@ -511,22 +567,37 @@ const RequestJemput = () => {
                   </CardHeader>
                   <CardContent>
                     <div className="space-y-4">
-                      {wasteItems.map((item, index) => (
-                        <div key={item.id} className="p-4 border border-gray-200 rounded-lg">
-                          <div className="flex items-center justify-between mb-3">
-                            <h4 className="font-medium text-gray-800">Sampah #{index + 1}</h4>
-                            {wasteItems.length > 1 && (
-                              <Button
-                                type="button"
-                                variant="ghost"
-                                size="sm"
-                                onClick={() => removeWasteItem(item.id)}
-                                className="text-red-600 hover:text-red-700 hover:bg-red-50"
-                              >
-                                <Trash2 className="w-4 h-4" />
-                              </Button>
-                            )}
-                          </div>
+                      {wasteItems.map((item, index) => {
+                        // Cek apakah item ini tidak lengkap
+                        const isIncomplete = (item.type && !item.estimated_weight) || (!item.type && item.estimated_weight > 0);
+                        
+                        return (
+                          <div key={item.id} className={`p-4 border rounded-lg transition-all duration-200 ${
+                            isIncomplete 
+                              ? 'border-red-300 bg-red-50' 
+                              : 'border-gray-200'
+                          }`}>
+                            <div className="flex items-center justify-between mb-3">
+                              <div className="flex items-center gap-2">
+                                <h4 className="font-medium text-gray-800">Sampah #{index + 1}</h4>
+                                {isIncomplete && (
+                                  <span className="px-2 py-1 text-xs bg-red-100 text-red-700 rounded-full">
+                                    Belum lengkap
+                                  </span>
+                                )}
+                              </div>
+                              {wasteItems.length > 1 && (
+                                <Button
+                                  type="button"
+                                  variant="ghost"
+                                  size="sm"
+                                  onClick={() => removeWasteItem(item.id)}
+                                  className="text-red-600 hover:text-red-700 hover:bg-red-50"
+                                >
+                                  <Trash2 className="w-4 h-4" />
+                                </Button>
+                              )}
+                            </div>
 
                           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                             <div>
@@ -578,7 +649,8 @@ const RequestJemput = () => {
                             />
                           </div>
                         </div>
-                      ))}
+                      );
+                    })}
                     </div>
                   </CardContent>
                 </Card>
@@ -610,13 +682,13 @@ const RequestJemput = () => {
                       <div className="flex justify-between">
                         <span className="text-gray-600">Total Jenis:</span>
                         <span className="font-medium">
-                          {wasteItems.filter(item => item.type).length} jenis
+                          {wasteItems.filter(item => item.type && item.estimated_weight > 0).length} jenis
                         </span>
                       </div>
                       <div className="flex justify-between">
                         <span className="text-gray-600">Total Berat:</span>
                         <span className="font-medium">
-                          {wasteItems.reduce((sum, item) => sum + (item.estimated_weight || 0), 0).toFixed(1)} kg
+                          {wasteItems.filter(item => item.type && item.estimated_weight > 0).reduce((sum, item) => sum + (item.estimated_weight || 0), 0).toFixed(1)} kg
                         </span>
                       </div>
                     </div>

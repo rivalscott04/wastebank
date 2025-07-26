@@ -210,7 +210,6 @@ Temporary Items
 
 # Build outputs
 build/
-dist/
 out/
 
 # Testing
