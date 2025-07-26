@@ -29,5 +29,10 @@ export const transactionService = {
   async updatePaymentStatus(id: number, payment_status: 'pending' | 'completed' | 'cancelled') {
     const response = await api.patch(`/transactions/${id}/payment`, { payment_status });
     return response.data;
+  },
+
+  async deleteTransaction(id: number) {
+    const response = await api.delete(`/transactions/${id}`);
+    return response.data;
   }
 }; 

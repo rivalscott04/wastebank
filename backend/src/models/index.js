@@ -22,7 +22,7 @@ Transaction.belongsTo(User, { foreignKey: 'user_id', as: 'transactionUser' });
 User.hasMany(Transaction, { foreignKey: 'user_id', as: 'transactions' });
 Transaction.belongsTo(WasteCollection, { foreignKey: 'waste_collection_id', as: 'waste_collection' });
 WasteCollection.hasOne(Transaction, { foreignKey: 'waste_collection_id', as: 'transaction' });
-Transaction.hasMany(TransactionItem, { foreignKey: 'transaction_id', as: 'items' });
+Transaction.hasMany(TransactionItem, { foreignKey: 'transaction_id', as: 'items', onDelete: 'CASCADE' });
 TransactionItem.belongsTo(Transaction, { foreignKey: 'transaction_id', as: 'transaction' });
 TransactionItem.belongsTo(WasteCategory, { foreignKey: 'category_id', as: 'transactionCategory' });
 WasteCategory.hasMany(TransactionItem, { foreignKey: 'category_id', as: 'transactionItems' });

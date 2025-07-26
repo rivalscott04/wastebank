@@ -183,13 +183,41 @@ const Transaksi = () => {
     setDeleteTransaction(transaction);
   };
 
-  const confirmDelete = () => {
+  const confirmDelete = async () => {
     if (deleteTransaction) {
-      setTransactions(prev => prev.filter(t => t.id !== deleteTransaction.id));
-      toast.success("Transaksi berhasil dihapus!", {
-        description: `Transaksi ${deleteTransaction.user_name} telah dihapus dari sistem`,
-      });
-      setDeleteTransaction(null);
+      try {
+        setIsLoading(true);
+        await transactionService.deleteTransaction(Number(deleteTransaction.id));
+        
+        // Refresh data dari API
+        const apiData = await transactionService.getAllTransactions();
+        const mapped = apiData.map((trx: any) => ({
+          id: trx.id,
+          user_id: trx.user_id,
+          user_name: trx.transactionUser?.name || '-',
+          waste_id: trx.items?.[0]?.category_id || '-',
+          waste_name: trx.items && trx.items.length > 0
+            ? trx.items.map((i: any) => i.transactionCategory?.name).filter(Boolean).join(', ')
+            : '-',
+          weight: typeof trx.total_weight !== 'undefined' ? trx.total_weight : (trx.items?.reduce((sum: number, i: any) => sum + Number(i.weight || 0), 0)),
+          total_price: trx.total_amount,
+          total_points: trx.total_points,
+          date: trx.createdAt,
+          created_at: trx.createdAt
+        }));
+        setTransactions(mapped);
+        
+        toast.success("Transaksi berhasil dihapus!", {
+          description: `Transaksi ${deleteTransaction.user_name} telah dihapus dari sistem. Poin user telah dikurangi.`,
+        });
+      } catch (error) {
+        toast.error("Gagal menghapus transaksi", {
+          description: "Terjadi kesalahan saat menghapus transaksi"
+        });
+      } finally {
+        setIsLoading(false);
+        setDeleteTransaction(null);
+      }
     }
   };
 

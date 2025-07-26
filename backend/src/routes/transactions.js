@@ -178,4 +178,56 @@ router.patch('/:id/payment', auth, async (req, res) => {
   }
 });
 
+// Delete transaction (admin only)
+router.delete('/:id', auth, async (req, res) => {
+  try {
+    if (req.user.role !== 'admin') {
+      return res.status(403).json({ message: 'Access denied' });
+    }
+
+    const transaction = await Transaction.findByPk(req.params.id, {
+      include: [
+        {
+          model: TransactionItem,
+          as: 'items'
+        }
+      ]
+    });
+
+    if (!transaction) {
+      return res.status(404).json({ message: 'Transaction not found' });
+    }
+
+    // Calculate total points to deduct from user
+    const totalPointsToDeduct = transaction.total_points || 0;
+
+    // Delete transaction (this will cascade delete TransactionItems)
+    await transaction.destroy();
+
+    // Update user points (deduct the points)
+    if (totalPointsToDeduct > 0) {
+      const user = await User.findByPk(transaction.user_id);
+      if (user) {
+        const newTotalPoints = Math.max(0, user.total_points - totalPointsToDeduct);
+        
+        // Update rank based on new points
+        let newRank = 'Bronze';
+        if (newTotalPoints >= 10000) newRank = 'Platinum';
+        else if (newTotalPoints >= 5000) newRank = 'Gold';
+        else if (newTotalPoints >= 1000) newRank = 'Silver';
+
+        await user.update({
+          total_points: newTotalPoints,
+          rank: newRank
+        });
+      }
+    }
+
+    res.json({ message: 'Transaction deleted successfully' });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: 'Server error' });
+  }
+});
+
 module.exports = router; 
