@@ -77,25 +77,23 @@ const Settings = () => {
       return;
     }
     try {
-      const method = isEdit ? 'PUT' : 'POST';
-      const url = isEdit ? `/api/waste-prices/${form.id}` : '/api/waste-prices';
-      const res = await fetch(url, {
-        method,
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${localStorage.getItem('token')}`
-        },
-        body: JSON.stringify({
+      if (isEdit) {
+        await wastePriceService.updateWastePrice(form.id, {
+          price_per_kg: Number(form.price_per_kg),
+          points_per_kg: Number(form.points_per_kg)
+        });
+      } else {
+        await wastePriceService.createWastePrice({
           category_id: Number(form.category_id),
           price_per_kg: Number(form.price_per_kg),
           points_per_kg: Number(form.points_per_kg),
           icon: form.icon
-        })
-      });
-      if (!res.ok) throw new Error('Gagal menyimpan data');
+        });
+      }
       toast.success(isEdit ? 'Harga berhasil diupdate' : 'Harga berhasil ditambahkan');
       setForm({ id: 0, category_id: '', price_per_kg: '', points_per_kg: '', icon: '' });
       setIsEdit(false);
+      setOpen(false); // Close modal after successful save
       fetchData();
     } catch (e) {
       toast.error('Gagal menyimpan data');
