@@ -210,7 +210,8 @@ router.patch('/:id/status', auth, async (req, res) => {
             category_id: item.category_id,
             weight,
             price_per_kg,
-            points_earned
+            points_earned,
+            subtotal
           });
         }
         
@@ -241,7 +242,11 @@ router.patch('/:id/status', auth, async (req, res) => {
         for (const tItem of transactionItems) {
           await TransactionItem.create({
             transaction_id: transaction.id,
-            ...tItem
+            category_id: tItem.category_id,
+            weight: tItem.weight,
+            price_per_kg: tItem.price_per_kg,
+            points_earned: tItem.points_earned,
+            subtotal: tItem.subtotal
           });
         }
         
