@@ -71,10 +71,9 @@ const RequestJemput = () => {
   const [categories, setCategories] = useState<{ id: number, name: string }[]>([]);
 
   const timeSlots = [
-    '08:00-11:00',
-    '09:00-12:00',
-    '13:00-16:00',
-    '14:00-17:00'
+    { value: 'morning', label: 'Pagi (08:00-12:00)' },
+    { value: 'afternoon', label: 'Siang (12:00-16:00)' },
+    { value: 'evening', label: 'Sore (16:00-20:00)' }
   ];
 
   const [selectedRequest, setSelectedRequest] = useState<PickupRequest | null>(null);
@@ -406,7 +405,7 @@ const RequestJemput = () => {
                         >
                           <option value="">Pilih waktu</option>
                           {timeSlots.map(slot => (
-                            <option key={slot} value={slot}>{slot}</option>
+                            <option key={slot.value} value={slot.value}>{slot.label}</option>
                           ))}
                         </select>
                       </div>
@@ -604,7 +603,9 @@ const RequestJemput = () => {
                       </div>
                       <div className="flex justify-between">
                         <span className="text-gray-600">Waktu:</span>
-                        <span className="font-medium">{formData.time_slot || '-'}</span>
+                        <span className="font-medium">
+                          {formData.time_slot ? timeSlots.find(slot => slot.value === formData.time_slot)?.label || formData.time_slot : '-'}
+                        </span>
                       </div>
                       <div className="flex justify-between">
                         <span className="text-gray-600">Total Jenis:</span>
@@ -685,7 +686,12 @@ const RequestJemput = () => {
                               : <span className="text-gray-400 italic">-</span>
                             }
                           </div>
-                          {request.time_slot && <div className="flex items-center gap-1"><Clock className="w-4 h-4" /> {request.time_slot}</div>}
+                          {request.time_slot && (
+                            <div className="flex items-center gap-1">
+                              <Clock className="w-4 h-4" /> 
+                              {timeSlots.find(slot => slot.value === request.time_slot)?.label || request.time_slot}
+                            </div>
+                          )}
                         </div>
                         <div className="flex items-center gap-2 text-gray-700 font-medium mb-1"><MapPin className="w-4 h-4 text-pink-500" />{request.address}</div>
                         <div className="flex flex-wrap gap-4 text-sm">
@@ -742,7 +748,11 @@ const RequestJemput = () => {
             <div className="mb-2 flex items-center gap-2">
               <Calendar className="w-5 h-5 text-blue-500" />
               <span className="font-semibold">{formatDate(selectedRequest.date)}</span>
-              {selectedRequest.time_slot && <span className="ml-2 text-gray-500">({selectedRequest.time_slot})</span>}
+              {selectedRequest.time_slot && (
+                <span className="ml-2 text-gray-500">
+                  ({timeSlots.find(slot => slot.value === selectedRequest.time_slot)?.label || selectedRequest.time_slot})
+                </span>
+              )}
             </div>
             <div className="mb-2 flex items-center gap-2">
               <MapPin className="w-5 h-5 text-pink-500" />
