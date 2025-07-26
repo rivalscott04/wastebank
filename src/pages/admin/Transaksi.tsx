@@ -210,6 +210,10 @@ const Transaksi = () => {
         toast.success("Transaksi berhasil dihapus!", {
           description: `Transaksi ${deleteTransaction.user_name} telah dihapus dari sistem. Poin user telah dikurangi.`,
         });
+        
+        // Trigger dashboard refresh
+        window.dispatchEvent(new CustomEvent('dashboard-refresh'));
+        localStorage.setItem('dashboard-update', Date.now().toString());
       } catch (error) {
         toast.error("Gagal menghapus transaksi", {
           description: "Terjadi kesalahan saat menghapus transaksi"

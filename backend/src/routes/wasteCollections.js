@@ -5,7 +5,7 @@ const WasteCategory = require('../models/WasteCategory');
 const WastePrice = require('../models/WastePrice');
 const auth = require('../middleware/auth');
 
-console.log('=== WASTE COLLECTIONS ROUTES LOADED ===');
+
 
 // Get all waste collections (admin) or user's waste collections (nasabah)
 router.get('/', auth, async (req, res) => {

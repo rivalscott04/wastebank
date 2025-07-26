@@ -96,7 +96,7 @@ const AdminKategori = () => {
     e.preventDefault();
     setIsLoading(true);
     try {
-      console.log('Submitting category data:', formData);
+
       
       if (dialogMode === 'add') {
         const result = await wasteService.createCategory({ 
@@ -104,16 +104,22 @@ const AdminKategori = () => {
           price_per_kg: Number(formData.price_per_kg),
           points_per_kg: Number(formData.points_per_kg)
         });
-        console.log('Category created:', result);
         toast.success('Kategori baru berhasil ditambahkan!');
+        
+        // Trigger dashboard refresh
+        window.dispatchEvent(new CustomEvent('dashboard-refresh'));
+        localStorage.setItem('dashboard-update', Date.now().toString());
       } else if (selectedCategory) {
         const result = await wasteService.updateCategory(selectedCategory.id, { 
           name: formData.name,
           price_per_kg: Number(formData.price_per_kg),
           points_per_kg: Number(formData.points_per_kg)
         });
-        console.log('Category updated:', result);
         toast.success('Kategori berhasil diperbarui!');
+        
+        // Trigger dashboard refresh
+        window.dispatchEvent(new CustomEvent('dashboard-refresh'));
+        localStorage.setItem('dashboard-update', Date.now().toString());
       }
       // Refresh data
       const data = await wasteService.getCategories();
@@ -121,8 +127,6 @@ const AdminKategori = () => {
       setIsDialogOpen(false);
       setSelectedCategory(null);
     } catch (e: any) {
-      console.error('Error submitting category:', e);
-      console.error('Error response:', e.response?.data);
       toast.error(`Gagal menyimpan kategori: ${e.response?.data?.message || e.message}`);
     }
     setIsLoading(false);

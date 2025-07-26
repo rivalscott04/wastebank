@@ -39,17 +39,12 @@ router.post('/', auth, async (req, res) => {
       return res.status(403).json({ message: 'Access denied' });
     }
 
-    console.log('Create category request body:', req.body);
     const { name, description, price_per_kg, points_per_kg } = req.body;
-    
-    console.log('Extracted data:', { name, description, price_per_kg, points_per_kg });
     
     const category = await WasteCategory.create({
       name,
       description
     });
-
-    console.log('Category created successfully:', category.toJSON());
     
     // Auto-create default waste price entry
     try {
@@ -77,7 +72,6 @@ router.post('/', auth, async (req, res) => {
         points_per_kg: points_per_kg || 3,     // Use provided points or default
         icon: autoIcon
       });
-      console.log(`Default waste price created for new category with icon: ${autoIcon}`);
     } catch (priceError) {
       console.error('Failed to create default waste price:', priceError);
       // Don't fail the whole request if price creation fails

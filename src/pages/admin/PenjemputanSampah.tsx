@@ -247,6 +247,12 @@ const PenjemputanSampah = () => {
       toast.success("Status berhasil diperbarui!", {
         description: `Status permintaan diubah menjadi ${statusText}`,
       });
+      
+      // Trigger dashboard refresh if status is completed
+      if (newStatus === 'completed') {
+        window.dispatchEvent(new CustomEvent('dashboard-refresh'));
+        localStorage.setItem('dashboard-update', Date.now().toString());
+      }
     } catch (error: any) {
       toast.error('Gagal memperbarui status', {
         description: error?.response?.data?.message || 'Terjadi kesalahan saat update status',

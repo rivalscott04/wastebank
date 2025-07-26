@@ -33,56 +33,80 @@ const AdminDashboard = () => {
   const [error, setError] = useState('');
   const [activities, setActivities] = useState<any[]>([]);
 
-  useEffect(() => {
-    const loadData = async () => {
-      setIsLoading(true);
-      setError('');
-      try {
-        // Check if user is logged in and is admin
-        const userData = localStorage.getItem('user');
-        
-        if (!userData) {
-          navigate('/login');
-          return;
-        }
-        
-        const parsedUser = JSON.parse(userData);
-        
-        if (parsedUser.role !== 'admin') {
-          toast.error('Akses Ditolak', { description: 'Anda tidak memiliki akses ke halaman admin' });
-          navigate('/');
-          return;
-        }
-        
-        setUser(parsedUser);
-        
-        // Fetch data
-        const [users, transactions, totalWeightData] = await Promise.all([
-          userService.getAllUsers(),
-          transactionService.getAllTransactions(),
-          dashboardService.getTotalWeight()
-        ]);
-        
-        setStats({
-          totalUsers: users.length,
-          totalWeight: totalWeightData.totalWeight || 0,
-          totalTransactions: transactions.length,
-          totalPoints: transactions.reduce((sum, t) => sum + Number(t.total_points || 0), 0)
-        });
-        
-        // Fetch aktivitas terbaru - skip untuk sementara karena ada error
-        // const activitiesData = await dashboardService.getActivities();
-        // setActivities(activitiesData);
-        setActivities([]); // Set empty array untuk sementara
-        
-      } catch (e) {
-        console.error('Dashboard error:', e);
-        setError('Gagal memuat data dashboard');
+  const loadData = async () => {
+    setIsLoading(true);
+    setError('');
+    try {
+      // Check if user is logged in and is admin
+      const userData = localStorage.getItem('user');
+      
+      if (!userData) {
+        navigate('/login');
+        return;
       }
-      setIsLoading(false);
-    };
+      
+      const parsedUser = JSON.parse(userData);
+      
+      if (parsedUser.role !== 'admin') {
+        toast.error('Akses Ditolak', { description: 'Anda tidak memiliki akses ke halaman admin' });
+        navigate('/');
+        return;
+      }
+      
+      setUser(parsedUser);
+      
+      // Fetch data
+      const [users, transactions, totalWeightData] = await Promise.all([
+        userService.getAllUsers(),
+        transactionService.getAllTransactions(),
+        dashboardService.getTotalWeight()
+      ]);
+      
+      setStats({
+        totalUsers: users.length,
+        totalWeight: totalWeightData.totalWeight || 0,
+        totalTransactions: transactions.length,
+        totalPoints: transactions.reduce((sum, t) => sum + Number(t.total_points || 0), 0)
+      });
+      
+      // Fetch aktivitas terbaru - skip untuk sementara karena ada error
+      // const activitiesData = await dashboardService.getActivities();
+      // setActivities(activitiesData);
+      setActivities([]); // Set empty array untuk sementara
+      
+    } catch (e) {
+      console.error('Dashboard error:', e);
+      setError('Gagal memuat data dashboard');
+    }
+    setIsLoading(false);
+  };
+
+  useEffect(() => {
     loadData();
   }, [navigate]);
+
+  // Listen for custom events to refresh dashboard data
+  useEffect(() => {
+    const handleDataUpdate = () => {
+      loadData();
+    };
+
+    // Listen for custom events when data changes
+    window.addEventListener('dashboard-refresh', handleDataUpdate);
+    
+    // Also listen for storage changes (if other tabs update data)
+    const handleStorageChange = (e: StorageEvent) => {
+      if (e.key === 'dashboard-update') {
+        loadData();
+      }
+    };
+    window.addEventListener('storage', handleStorageChange);
+
+    return () => {
+      window.removeEventListener('dashboard-refresh', handleDataUpdate);
+      window.removeEventListener('storage', handleDataUpdate);
+    };
+  }, []);
 
   const statsArr = [
     {
