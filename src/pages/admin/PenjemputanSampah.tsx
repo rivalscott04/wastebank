@@ -226,6 +226,11 @@ const PenjemputanSampah = () => {
       toast.success("Permintaan penjemputan berhasil dihapus!", {
         description: `Permintaan dari ${deleteRequest.user_name} telah dihapus dari sistem`,
       });
+      
+      // Trigger pickup history refresh for nasabah
+      window.dispatchEvent(new CustomEvent('pickup-refresh'));
+      localStorage.setItem('pickup-update', Date.now().toString());
+      
       setDeleteRequest(null);
     }
   };
@@ -252,7 +257,15 @@ const PenjemputanSampah = () => {
       if (newStatus === 'completed') {
         window.dispatchEvent(new CustomEvent('dashboard-refresh'));
         localStorage.setItem('dashboard-update', Date.now().toString());
+        
+        // Trigger transaction history refresh for nasabah
+        window.dispatchEvent(new CustomEvent('transaction-refresh'));
+        localStorage.setItem('transaction-update', Date.now().toString());
       }
+      
+      // Trigger pickup history refresh for nasabah (for all status changes)
+      window.dispatchEvent(new CustomEvent('pickup-refresh'));
+      localStorage.setItem('pickup-update', Date.now().toString());
     } catch (error: any) {
       toast.error('Gagal memperbarui status', {
         description: error?.response?.data?.message || 'Terjadi kesalahan saat update status',

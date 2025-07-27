@@ -37,58 +37,97 @@ const RiwayatTransaksi = () => {
   const navigate = useNavigate();
   const [isLoading, setIsLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
-  const [filterType, setFilterType] = useState<'all' | 'pickup' | 'exchange'>('all');
-  const [sortOrder, setSortOrder] = useState<'desc' | 'asc'>('desc');
+  const [filterType, setFilterType] = useState<'all' | 'pickup' | 'exchange'>(() => {
+    return (localStorage.getItem('riwayatFilterType') as 'all' | 'pickup' | 'exchange') || 'all';
+  });
+  const [sortOrder, setSortOrder] = useState<'desc' | 'asc'>(() => {
+    return (localStorage.getItem('riwayatSortOrder') as 'desc' | 'asc') || 'desc';
+  });
   const [transactions, setTransactions] = useState<Transaction[]>([]);
+
+  // Functions to handle filter and sort changes with localStorage
+  const handleFilterChange = (type: 'all' | 'pickup' | 'exchange') => {
+    setFilterType(type);
+    localStorage.setItem('riwayatFilterType', type);
+  };
+
+  const handleSortChange = (order: 'desc' | 'asc') => {
+    setSortOrder(order);
+    localStorage.setItem('riwayatSortOrder', order);
+  };
   const [openDetail, setOpenDetail] = useState(false);
   const [selectedTransaction, setSelectedTransaction] = useState<Transaction | null>(null);
 
-  useEffect(() => {
-    const loadData = async () => {
-      setIsLoading(true);
-      try {
-        const user = localStorage.getItem('user');
-        if (!user) {
-          navigate('/login');
-          return;
-        }
-        const userData = JSON.parse(user);
-        if (userData.role !== 'nasabah') {
-          navigate('/login');
-          return;
-        }
-        const res = await api.get('/transactions');
-        
-        // Mapping agar sesuai Transaction[]
-        const data = (res.data || res).map((trx: any) => {
-          const categories = trx.items && trx.items.length > 0 
-            ? trx.items.map((i:any) => ({
-                category_id: i.category_id,
-                category_name: i.transactionCategory?.name,
-                weight: i.weight
-              }))
-            : [];
-          
-          return {
-            id: trx.id,
-            date: trx.createdAt || trx.date,
-            type: trx.type || (trx.items && trx.items.length > 0 ? 'pickup' : 'exchange'),
-            description: trx.notes || (trx.items && trx.items.length > 0 ? `Penjemputan Sampah ${categories.map(c => c.category_name).filter(Boolean).join(', ')}` : 'Tukar Poin'),
-            points: trx.total_points || trx.points || 0,
-            status: trx.payment_status || trx.status || 'completed',
-            waste_type: categories.length > 0 ? categories.map(c => c.category_name).filter(Boolean).join(', ') : undefined,
-            weight: trx.total_weight,
-            reward_item: trx.reward_item || undefined
-          };
-        });
-        setTransactions(data);
-      } catch (e) {
-        toast.error('Gagal memuat riwayat transaksi');
+  const loadData = async () => {
+    setIsLoading(true);
+    try {
+      const user = localStorage.getItem('user');
+      if (!user) {
+        navigate('/login');
+        return;
       }
-      setIsLoading(false);
-    };
+      const userData = JSON.parse(user);
+      if (userData.role !== 'nasabah') {
+        navigate('/login');
+        return;
+      }
+      const res = await api.get('/transactions');
+      
+      // Mapping agar sesuai Transaction[]
+      const data = (res.data || res).map((trx: any) => {
+        const categories = trx.items && trx.items.length > 0 
+          ? trx.items.map((i:any) => ({
+              category_id: i.category_id,
+              category_name: i.transactionCategory?.name,
+              weight: i.weight
+            }))
+          : [];
+        
+        return {
+          id: trx.id,
+          date: trx.createdAt || trx.date,
+          type: trx.type || (trx.items && trx.items.length > 0 ? 'pickup' : 'exchange'),
+          description: trx.notes || (trx.items && trx.items.length > 0 ? `Penjemputan Sampah ${categories.map(c => c.category_name).filter(Boolean).join(', ')}` : 'Tukar Poin'),
+          points: trx.total_points || trx.points || 0,
+          status: trx.payment_status || trx.status || 'completed',
+          waste_type: categories.length > 0 ? categories.map(c => c.category_name).filter(Boolean).join(', ') : undefined,
+          weight: trx.total_weight,
+          reward_item: trx.reward_item || undefined
+        };
+      });
+      setTransactions(data);
+    } catch (e) {
+      toast.error('Gagal memuat riwayat transaksi');
+    }
+    setIsLoading(false);
+  };
+
+  useEffect(() => {
     loadData();
   }, [navigate]);
+
+  // Listen for custom events to refresh data
+  useEffect(() => {
+    const handleDataUpdate = () => {
+      loadData();
+    };
+
+    // Listen for custom events when data changes
+    window.addEventListener('transaction-refresh', handleDataUpdate);
+    
+    // Also listen for storage changes (if other tabs update data)
+    const handleStorageChange = (e: StorageEvent) => {
+      if (e.key === 'transaction-update') {
+        loadData();
+      }
+    };
+    window.addEventListener('storage', handleStorageChange);
+
+    return () => {
+      window.removeEventListener('transaction-refresh', handleDataUpdate);
+      window.removeEventListener('storage', handleStorageChange);
+    };
+  }, []);
 
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleDateString('id-ID', {
@@ -260,7 +299,7 @@ const RiwayatTransaksi = () => {
                 <div className="flex gap-2">
                   <select
                     value={filterType}
-                    onChange={(e) => setFilterType(e.target.value as any)}
+                    onChange={(e) => handleFilterChange(e.target.value as any)}
                     className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-bank-green-500 focus:border-transparent"
                   >
                     <option value="all">Semua Tipe</option>
@@ -270,7 +309,7 @@ const RiwayatTransaksi = () => {
 
                   <Button
                     variant="outline"
-                    onClick={() => setSortOrder(sortOrder === 'desc' ? 'asc' : 'desc')}
+                    onClick={() => handleSortChange(sortOrder === 'desc' ? 'asc' : 'desc')}
                     className="hover-scale"
                   >
                     <ArrowUpDown className="w-4 h-4 mr-2" />

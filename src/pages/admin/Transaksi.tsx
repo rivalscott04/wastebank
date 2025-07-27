@@ -214,6 +214,10 @@ const Transaksi = () => {
         // Trigger dashboard refresh
         window.dispatchEvent(new CustomEvent('dashboard-refresh'));
         localStorage.setItem('dashboard-update', Date.now().toString());
+        
+        // Trigger transaction history refresh for nasabah
+        window.dispatchEvent(new CustomEvent('transaction-refresh'));
+        localStorage.setItem('transaction-update', Date.now().toString());
       } catch (error) {
         toast.error("Gagal menghapus transaksi", {
           description: "Terjadi kesalahan saat menghapus transaksi"

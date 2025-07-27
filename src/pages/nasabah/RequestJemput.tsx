@@ -51,7 +51,16 @@ const RequestJemput = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showConfirmDialog, setShowConfirmDialog] = useState(false);
-  const [activeTab, setActiveTab] = useState<'new' | 'history'>('new');
+  const [activeTab, setActiveTab] = useState<'new' | 'history'>(() => {
+    // Get saved tab from localStorage, default to 'new'
+    return (localStorage.getItem('requestJemputActiveTab') as 'new' | 'history') || 'new';
+  });
+
+  // Function to handle tab change and save to localStorage
+  const handleTabChange = (tab: 'new' | 'history') => {
+    setActiveTab(tab);
+    localStorage.setItem('requestJemputActiveTab', tab);
+  };
 
   // Form state
   const [formData, setFormData] = useState({
@@ -127,7 +136,7 @@ const RequestJemput = () => {
     loadData();
   }, [navigate]);
 
-  useEffect(() => {
+  const loadPickupHistory = () => {
     if (activeTab === 'history') {
       wasteService.getPickupRequests().then(res => {
         const data = (res.data || res).map((item: any) => ({
@@ -150,6 +159,33 @@ const RequestJemput = () => {
         setPickupHistory(data);
       });
     }
+  };
+
+  useEffect(() => {
+    loadPickupHistory();
+  }, [activeTab]);
+
+  // Listen for custom events to refresh pickup history
+  useEffect(() => {
+    const handleDataUpdate = () => {
+      loadPickupHistory();
+    };
+
+    // Listen for custom events when data changes
+    window.addEventListener('pickup-refresh', handleDataUpdate);
+    
+    // Also listen for storage changes (if other tabs update data)
+    const handleStorageChange = (e: StorageEvent) => {
+      if (e.key === 'pickup-update') {
+        loadPickupHistory();
+      }
+    };
+    window.addEventListener('storage', handleStorageChange);
+
+    return () => {
+      window.removeEventListener('pickup-refresh', handleDataUpdate);
+      window.removeEventListener('storage', handleStorageChange);
+    };
   }, [activeTab]);
 
   const addWasteItem = () => {
@@ -297,7 +333,7 @@ const RequestJemput = () => {
         notes: ''
       });
       setWasteItems([{ id: '1', type: '', estimated_weight: 0, description: '' }]);
-      setActiveTab('history');
+              handleTabChange('history');
     } catch (error) {
       toast.error("Gagal Mengirim Request", {
         description: "Terjadi kesalahan saat mengirim permintaan. Silakan coba lagi."
@@ -395,7 +431,7 @@ const RequestJemput = () => {
           {/* Tabs */}
           <div className="flex space-x-1 bg-gray-100 p-1 rounded-lg w-fit">
             <button
-              onClick={() => setActiveTab('new')}
+                              onClick={() => handleTabChange('new')}
               className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
                 activeTab === 'new'
                   ? 'bg-white text-bank-green-700 shadow-sm'
@@ -405,7 +441,7 @@ const RequestJemput = () => {
               Request Baru
             </button>
             <button
-              onClick={() => setActiveTab('history')}
+                              onClick={() => handleTabChange('history')}
               className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
                 activeTab === 'history'
                   ? 'bg-white text-bank-green-700 shadow-sm'
@@ -732,7 +768,7 @@ const RequestJemput = () => {
                     <Truck className="w-16 h-16 text-gray-300 mx-auto mb-4" />
                     <h3 className="text-lg font-medium text-gray-600 mb-2">Belum ada request</h3>
                     <p className="text-gray-500">Ayo ajukan penjemputan sampah pertamamu!</p>
-                    <Button onClick={() => setActiveTab('new')} className="mt-4 bg-bank-green-600 hover:bg-bank-green-700 text-white">Request Jemput Sekarang</Button>
+                    <Button onClick={() => handleTabChange('new')} className="mt-4 bg-bank-green-600 hover:bg-bank-green-700 text-white">Request Jemput Sekarang</Button>
                   </div>
                 ) : (
                   <div className="space-y-4">
