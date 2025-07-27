@@ -220,18 +220,45 @@ const PenjemputanSampah = () => {
     setDeleteRequest(request);
   };
 
-  const confirmDelete = () => {
+  const confirmDelete = async () => {
     if (deleteRequest) {
-      setPickupRequests(prev => prev.filter(r => r.id !== deleteRequest.id));
-      toast.success("Permintaan penjemputan berhasil dihapus!", {
-        description: `Permintaan dari ${deleteRequest.user_name} telah dihapus dari sistem`,
-      });
-      
-      // Trigger pickup history refresh for nasabah
-      window.dispatchEvent(new CustomEvent('pickup-refresh'));
-      localStorage.setItem('pickup-update', Date.now().toString());
-      
-      setDeleteRequest(null);
+      try {
+        setIsLoading(true);
+        await wasteService.deleteWasteCollection(Number(deleteRequest.id));
+        
+        // Refresh data dari API
+        const res = await wasteService.getPickupRequests();
+        const data = (res.data || res).map((item: any) => ({
+          id: item.id,
+          user_id: item.user_id,
+          user_name: item.user?.name || 'Unknown',
+          waste_id: item.items?.[0]?.category_id || '-',
+          waste_name: item.items && item.items.length > 0
+            ? item.items.map((i: any) => i.category?.name).filter(Boolean).join(', ')
+            : '-',
+          address: item.pickup_address,
+          date_request: item.pickup_date,
+          estimated_weight: item.items?.reduce((sum: number, i: any) => sum + Number(i.estimated_weight || 0), 0) || 0,
+          status: item.status,
+          created_at: item.createdAt
+        }));
+        setPickupRequests(data);
+        
+        toast.success("Permintaan penjemputan berhasil dihapus!", {
+          description: `Permintaan dari ${deleteRequest.user_name} telah dihapus dari sistem`,
+        });
+        
+        // Trigger pickup history refresh for nasabah
+        window.dispatchEvent(new CustomEvent('pickup-refresh'));
+        localStorage.setItem('pickup-update', Date.now().toString());
+      } catch (error) {
+        toast.error("Gagal menghapus permintaan penjemputan", {
+          description: "Terjadi kesalahan saat menghapus data"
+        });
+      } finally {
+        setIsLoading(false);
+        setDeleteRequest(null);
+      }
     }
   };
 

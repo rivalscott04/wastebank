@@ -308,4 +308,34 @@ router.patch('/:id/cancel', auth, async (req, res) => {
   }
 });
 
+// Delete waste collection (admin only)
+router.delete('/:id', auth, async (req, res) => {
+  try {
+    if (req.user.role !== 'admin') {
+      return res.status(403).json({ message: 'Access denied' });
+    }
+
+    const collection = await WasteCollection.findByPk(req.params.id, {
+      include: [
+        {
+          model: WasteCollectionItem,
+          as: 'items'
+        }
+      ]
+    });
+
+    if (!collection) {
+      return res.status(404).json({ message: 'Collection request not found' });
+    }
+
+    // Delete collection (this will cascade delete WasteCollectionItems)
+    await collection.destroy();
+
+    res.json({ message: 'Collection deleted successfully' });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: 'Server error' });
+  }
+});
+
 module.exports = router; 
