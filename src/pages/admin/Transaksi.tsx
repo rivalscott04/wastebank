@@ -24,6 +24,8 @@ import {
   Coins
 } from 'lucide-react';
 import { transactionService } from '@/services/transaction.service';
+import { userService } from '@/services/user.service';
+import { wasteService } from '@/services/waste.service';
 import Sidebar from '@/components/Sidebar';
 
 interface Transaction {
@@ -49,13 +51,19 @@ const Transaksi = () => {
   const [selectedTransaction, setSelectedTransaction] = useState<Transaction | null>(null);
   const [deleteTransaction, setDeleteTransaction] = useState<Transaction | null>(null);
   const [formData, setFormData] = useState({
+    user_id: '',
     user_name: '',
+    category_id: '',
     waste_name: '',
     weight: '',
     total_price: '',
     total_points: '',
     date: ''
   });
+  
+  // Data untuk dropdown
+  const [users, setUsers] = useState<{ id: number; name: string }[]>([]);
+  const [categories, setCategories] = useState<{ id: number; name: string; price_per_kg?: number; points_per_kg?: number }[]>([]);
 
   useEffect(() => {
     const loadData = async () => {
@@ -73,7 +81,16 @@ const Transaksi = () => {
       }
       setUser(parsedUser);
       try {
-        const apiData = await transactionService.getAllTransactions();
+        // Load transactions, users, and categories
+        const [apiData, usersData, categoriesData] = await Promise.all([
+          transactionService.getAllTransactions(),
+          userService.getAllUsers(),
+          wasteService.getCategories()
+        ]);
+        
+        // Set users and categories
+        setUsers(usersData);
+        setCategories(categoriesData);
         
         // Mapping data dari API ke struktur tabel
         const mapped = apiData.map((trx: any) => ({
@@ -107,9 +124,43 @@ const Transaksi = () => {
     }).format(amount);
   };
 
+  // Handle form changes
+  const handleFormChange = (field: string, value: string) => {
+    setFormData(prev => {
+      const newData = { ...prev, [field]: value };
+      
+      // Auto-calculate price and points when category or weight changes
+      if (field === 'category_id' || field === 'weight') {
+        const category = categories.find(cat => cat.id.toString() === newData.category_id);
+        const weight = parseFloat(newData.weight) || 0;
+        
+        if (category && weight > 0) {
+          const price = (category.price_per_kg || 0) * weight;
+          const points = (category.points_per_kg || 0) * weight;
+          
+          newData.total_price = price.toString();
+          newData.total_points = points.toString();
+          newData.waste_name = category.name;
+        }
+      }
+      
+      // Update user name when user changes
+      if (field === 'user_id') {
+        const selectedUser = users.find(user => user.id.toString() === value);
+        if (selectedUser) {
+          newData.user_name = selectedUser.name;
+        }
+      }
+      
+      return newData;
+    });
+  };
+
   const openAddDialog = () => {
     setFormData({
+      user_id: '',
       user_name: '',
+      category_id: '',
       waste_name: '',
       weight: '',
       total_price: '',
@@ -122,7 +173,9 @@ const Transaksi = () => {
   const openEditDialog = (transaction: Transaction) => {
     setSelectedTransaction(transaction);
     setFormData({
+      user_id: transaction.user_id,
       user_name: transaction.user_name,
+      category_id: transaction.waste_id,
       waste_name: transaction.waste_name,
       weight: transaction.weight.toString(),
       total_price: transaction.total_price.toString(),
@@ -132,51 +185,81 @@ const Transaksi = () => {
     setIsEditDialogOpen(true);
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (selectedTransaction) {
-      // Update existing transaction
-      const updatedTransaction: Transaction = {
-        ...selectedTransaction,
-        user_name: formData.user_name,
-        waste_name: formData.waste_name,
-        weight: parseFloat(formData.weight),
-        total_price: parseFloat(formData.total_price),
-        total_points: parseInt(formData.total_points),
-        date: formData.date
-      };
+    try {
+      setIsLoading(true);
 
-      setTransactions(prev =>
-        prev.map(t => t.id === selectedTransaction.id ? updatedTransaction : t)
-      );
-      toast.success("Transaksi berhasil diperbarui!", {
-        description: `Transaksi ${formData.user_name} telah diperbaharui`,
-      });
-      setIsEditDialogOpen(false);
-    } else {
-      // Add new transaction
-      const newTransaction: Transaction = {
-        id: Date.now().toString(),
-        user_id: Date.now().toString(),
-        user_name: formData.user_name,
-        waste_id: Date.now().toString(),
-        waste_name: formData.waste_name,
-        weight: parseFloat(formData.weight),
-        total_price: parseFloat(formData.total_price),
-        total_points: parseInt(formData.total_points),
-        date: formData.date,
-        created_at: new Date().toISOString()
-      };
+      if (selectedTransaction) {
+        // Update existing transaction (not implemented yet)
+        toast.error("Edit transaksi belum diimplementasi");
+        setIsEditDialogOpen(false);
+      } else {
+        // Add new transaction
+        const selectedUser = users.find(user => user.id.toString() === formData.user_id);
+        const selectedCategory = categories.find(cat => cat.id.toString() === formData.category_id);
+        
+        if (!selectedUser || !selectedCategory) {
+          toast.error("Pilih nasabah dan kategori sampah");
+          return;
+        }
 
-      setTransactions(prev => [...prev, newTransaction]);
-      toast.success("Transaksi baru berhasil ditambahkan!", {
-        description: `Transaksi ${formData.user_name} telah terdaftar`,
+        const transactionData = {
+          user_id: parseInt(formData.user_id),
+          items: [{
+            category_id: parseInt(formData.category_id),
+            weight: parseFloat(formData.weight),
+            price_per_kg: selectedCategory.price_per_kg || 0,
+            points_earned: parseInt(formData.total_points)
+          }],
+          payment_method: 'cash' as const,
+          notes: `Transaksi manual oleh admin - ${selectedCategory.name}`
+        };
+
+        await transactionService.createTransaction(transactionData);
+        
+        // Refresh data
+        const apiData = await transactionService.getAllTransactions();
+        const mapped = apiData.map((trx: any) => ({
+          id: trx.id,
+          user_id: trx.user_id,
+          user_name: trx.transactionUser?.name || '-',
+          waste_id: trx.items?.[0]?.category_id || '-',
+          waste_name: trx.items && trx.items.length > 0
+            ? trx.items.map((i: any) => i.transactionCategory?.name).filter(Boolean).join(', ')
+            : '-',
+          weight: typeof trx.total_weight !== 'undefined' ? trx.total_weight : (trx.items?.reduce((sum: number, i: any) => sum + Number(i.weight || 0), 0)),
+          total_price: trx.total_amount,
+          total_points: trx.total_points,
+          date: trx.createdAt,
+          created_at: trx.createdAt
+        }));
+        setTransactions(mapped);
+
+        toast.success("Transaksi baru berhasil ditambahkan!", {
+          description: `Transaksi ${selectedUser.name} telah terdaftar`,
+        });
+        
+        // Trigger dashboard refresh
+        window.dispatchEvent(new CustomEvent('dashboard-refresh'));
+        localStorage.setItem('dashboard-update', Date.now().toString());
+        
+        // Trigger transaction history refresh for nasabah
+        window.dispatchEvent(new CustomEvent('transaction-refresh'));
+        localStorage.setItem('transaction-update', Date.now().toString());
+        
+        setIsAddDialogOpen(false);
+      }
+
+      setSelectedTransaction(null);
+    } catch (error) {
+      toast.error("Gagal menyimpan transaksi", {
+        description: "Terjadi kesalahan saat menyimpan data"
       });
-      setIsAddDialogOpen(false);
+    } finally {
+      setIsLoading(false);
     }
-
-    setSelectedTransaction(null);
   };
 
   const handleDelete = (transaction: Transaction) => {
@@ -484,22 +567,34 @@ const Transaksi = () => {
           <form onSubmit={handleSubmit} className="space-y-4">
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <Label htmlFor="user_name">Nama Nasabah</Label>
-                <Input
-                  id="user_name"
-                  value={formData.user_name}
-                  onChange={(e) => setFormData(prev => ({ ...prev, user_name: e.target.value }))}
-                  required
-                />
+                <Label htmlFor="user_id">Nama Nasabah</Label>
+                <Select value={formData.user_id} onValueChange={(value) => handleFormChange('user_id', value)}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Pilih nasabah" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {users.map(user => (
+                      <SelectItem key={user.id} value={user.id.toString()}>
+                        {user.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </div>
               <div>
-                <Label htmlFor="waste_name">Jenis Sampah</Label>
-                <Input
-                  id="waste_name"
-                  value={formData.waste_name}
-                  onChange={(e) => setFormData(prev => ({ ...prev, waste_name: e.target.value }))}
-                  required
-                />
+                <Label htmlFor="category_id">Jenis Sampah</Label>
+                <Select value={formData.category_id} onValueChange={(value) => handleFormChange('category_id', value)}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Pilih kategori" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {categories.map(category => (
+                      <SelectItem key={category.id} value={category.id.toString()}>
+                        {category.name} - Rp {category.price_per_kg?.toLocaleString()}/kg
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </div>
             </div>
             <div className="grid grid-cols-2 gap-4">
@@ -510,7 +605,7 @@ const Transaksi = () => {
                   type="number"
                   step="0.1"
                   value={formData.weight}
-                  onChange={(e) => setFormData(prev => ({ ...prev, weight: e.target.value }))}
+                  onChange={(e) => handleFormChange('weight', e.target.value)}
                   required
                 />
               </div>
@@ -520,8 +615,8 @@ const Transaksi = () => {
                   id="total_price"
                   type="number"
                   value={formData.total_price}
-                  onChange={(e) => setFormData(prev => ({ ...prev, total_price: e.target.value }))}
-                  required
+                  readOnly
+                  className="bg-gray-50"
                 />
               </div>
             </div>
@@ -532,8 +627,8 @@ const Transaksi = () => {
                   id="total_points"
                   type="number"
                   value={formData.total_points}
-                  onChange={(e) => setFormData(prev => ({ ...prev, total_points: e.target.value }))}
-                  required
+                  readOnly
+                  className="bg-gray-50"
                 />
               </div>
               <div>
@@ -542,7 +637,7 @@ const Transaksi = () => {
                   id="date"
                   type="date"
                   value={formData.date}
-                  onChange={(e) => setFormData(prev => ({ ...prev, date: e.target.value }))}
+                  onChange={(e) => handleFormChange('date', e.target.value)}
                   required
                 />
               </div>
